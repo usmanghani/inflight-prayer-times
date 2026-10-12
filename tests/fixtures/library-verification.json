@@ -1,0 +1,1909 @@
+{
+ "source": "api.adsbdb.com",
+ "checkedAt": "2026-10-12T07:14:18.958Z",
+ "rows": [
+  {
+   "flightNumber": "EK601",
+   "libraryRoute": "KHI-DXB",
+   "adsbdbRoute": "KHI-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.405Z",
+   "via": "UAE601"
+  },
+  {
+   "flightNumber": "EK603",
+   "libraryRoute": "KHI-DXB",
+   "adsbdbRoute": "KHI-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.405Z",
+   "via": "UAE603"
+  },
+  {
+   "flightNumber": "EK600",
+   "libraryRoute": "DXB-KHI",
+   "adsbdbRoute": "DXB-KHI",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.406Z",
+   "via": "UAE600"
+  },
+  {
+   "flightNumber": "EK602",
+   "libraryRoute": "DXB-KHI",
+   "adsbdbRoute": "DXB-KHI",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.406Z",
+   "via": "UAE602"
+  },
+  {
+   "flightNumber": "PK211",
+   "libraryRoute": "KHI-DXB",
+   "adsbdbRoute": "ISB-DXB",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.406Z",
+   "via": "PIA211"
+  },
+  {
+   "flightNumber": "PK212",
+   "libraryRoute": "DXB-KHI",
+   "adsbdbRoute": "DXB-ISB",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.407Z",
+   "via": "PIA212"
+  },
+  {
+   "flightNumber": "FZ330",
+   "libraryRoute": "KHI-DXB",
+   "adsbdbRoute": "KHI-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.407Z",
+   "via": "FDB330"
+  },
+  {
+   "flightNumber": "FZ331",
+   "libraryRoute": "DXB-KHI",
+   "adsbdbRoute": "DXB-KHI",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.407Z",
+   "via": "FDB331"
+  },
+  {
+   "flightNumber": "QR605",
+   "libraryRoute": "KHI-DOH",
+   "adsbdbRoute": "KHI-DOH",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.407Z",
+   "via": "QTR605"
+  },
+  {
+   "flightNumber": "QR604",
+   "libraryRoute": "DOH-KHI",
+   "adsbdbRoute": "DOH-KHI",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.407Z",
+   "via": "QTR604"
+  },
+  {
+   "flightNumber": "QR608",
+   "libraryRoute": "DOH-KHI",
+   "adsbdbRoute": "DOH-LHE",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.407Z",
+   "via": "QTR608"
+  },
+  {
+   "flightNumber": "TK708",
+   "libraryRoute": "KHI-IST",
+   "adsbdbRoute": "IST-DAC",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.408Z",
+   "via": "THY708"
+  },
+  {
+   "flightNumber": "TK709",
+   "libraryRoute": "IST-KHI",
+   "adsbdbRoute": "DAC-KHI",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.408Z",
+   "via": "THY709"
+  },
+  {
+   "flightNumber": "SV706",
+   "libraryRoute": "KHI-JED",
+   "adsbdbRoute": "SUB-DPS",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.408Z",
+   "via": "SVA706"
+  },
+  {
+   "flightNumber": "SV705",
+   "libraryRoute": "JED-KHI",
+   "adsbdbRoute": "KHI-JED",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.408Z",
+   "via": "SVA705"
+  },
+  {
+   "flightNumber": "PK741",
+   "libraryRoute": "KHI-JED",
+   "adsbdbRoute": "ISB-JED",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.408Z",
+   "via": "PIA741"
+  },
+  {
+   "flightNumber": "PK742",
+   "libraryRoute": "JED-KHI",
+   "adsbdbRoute": "JED-ISB",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.408Z",
+   "via": "PIA742"
+  },
+  {
+   "flightNumber": "SV718",
+   "libraryRoute": "KHI-RUH",
+   "adsbdbRoute": "JED-LHE",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.408Z",
+   "via": "SVA718"
+  },
+  {
+   "flightNumber": "SV717",
+   "libraryRoute": "RUH-KHI",
+   "adsbdbRoute": "KHI-RUH",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "SVA717"
+  },
+  {
+   "flightNumber": "EY201",
+   "libraryRoute": "KHI-AUH",
+   "adsbdbRoute": "BOM-AUH",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "ETD201"
+  },
+  {
+   "flightNumber": "EY200",
+   "libraryRoute": "AUH-KHI",
+   "adsbdbRoute": "AUH-BOM",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "ETD200"
+  },
+  {
+   "flightNumber": "EK622",
+   "libraryRoute": "DXB-LHE",
+   "adsbdbRoute": "DXB-LHE",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "UAE622"
+  },
+  {
+   "flightNumber": "EK623",
+   "libraryRoute": "LHE-DXB",
+   "adsbdbRoute": "LHE-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "UAE623"
+  },
+  {
+   "flightNumber": "QR628",
+   "libraryRoute": "DOH-LHE",
+   "adsbdbRoute": "DOH-LHE",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "QTR628"
+  },
+  {
+   "flightNumber": "QR629",
+   "libraryRoute": "LHE-DOH",
+   "adsbdbRoute": "LHE-DOH",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "QTR629"
+  },
+  {
+   "flightNumber": "EK614",
+   "libraryRoute": "DXB-ISB",
+   "adsbdbRoute": "DXB-ISB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "UAE614"
+  },
+  {
+   "flightNumber": "EK615",
+   "libraryRoute": "ISB-DXB",
+   "adsbdbRoute": "ISB-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "UAE615"
+  },
+  {
+   "flightNumber": "QR632",
+   "libraryRoute": "DOH-ISB",
+   "adsbdbRoute": "DOH-ISB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "QTR632"
+  },
+  {
+   "flightNumber": "QR633",
+   "libraryRoute": "ISB-DOH",
+   "adsbdbRoute": "ISB-DOH",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.409Z",
+   "via": "QTR633"
+  },
+  {
+   "flightNumber": "TK710",
+   "libraryRoute": "IST-ISB",
+   "adsbdbRoute": "IST-ISB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "THY710"
+  },
+  {
+   "flightNumber": "TK711",
+   "libraryRoute": "ISB-IST",
+   "adsbdbRoute": "ISB-IST",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "THY711"
+  },
+  {
+   "flightNumber": "EK511",
+   "libraryRoute": "DXB-DEL",
+   "adsbdbRoute": "DEL-DXB",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "UAE511"
+  },
+  {
+   "flightNumber": "EK512",
+   "libraryRoute": "DEL-DXB",
+   "adsbdbRoute": "DXB-DEL",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "UAE512"
+  },
+  {
+   "flightNumber": "EK500",
+   "libraryRoute": "DXB-BOM",
+   "adsbdbRoute": "DXB-BOM",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "UAE500"
+  },
+  {
+   "flightNumber": "EK501",
+   "libraryRoute": "BOM-DXB",
+   "adsbdbRoute": "BOM-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "UAE501"
+  },
+  {
+   "flightNumber": "EK568",
+   "libraryRoute": "DXB-BLR",
+   "adsbdbRoute": "DXB-BLR",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "UAE568"
+  },
+  {
+   "flightNumber": "EK569",
+   "libraryRoute": "BLR-DXB",
+   "adsbdbRoute": "BLR-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "UAE569"
+  },
+  {
+   "flightNumber": "QR570",
+   "libraryRoute": "DOH-DEL",
+   "adsbdbRoute": "DOH-DEL",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "QTR570"
+  },
+  {
+   "flightNumber": "QR571",
+   "libraryRoute": "DEL-DOH",
+   "adsbdbRoute": "DEL-DOH",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "QTR571"
+  },
+  {
+   "flightNumber": "AI101",
+   "libraryRoute": "DEL-JFK",
+   "adsbdbRoute": "DEL-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "AIC101"
+  },
+  {
+   "flightNumber": "AI102",
+   "libraryRoute": "JFK-DEL",
+   "adsbdbRoute": "JFK-DEL",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "AIC102"
+  },
+  {
+   "flightNumber": "AI173",
+   "libraryRoute": "DEL-SFO",
+   "adsbdbRoute": "DEL-SFO",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "AIC173"
+  },
+  {
+   "flightNumber": "AI174",
+   "libraryRoute": "SFO-DEL",
+   "adsbdbRoute": "SFO-DEL",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "AIC174"
+  },
+  {
+   "flightNumber": "AI175",
+   "libraryRoute": "SFO-BLR",
+   "adsbdbRoute": "BLR-SFO",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "AIC175"
+  },
+  {
+   "flightNumber": "AI176",
+   "libraryRoute": "BLR-SFO",
+   "adsbdbRoute": "SFO-BLR",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "AIC176"
+  },
+  {
+   "flightNumber": "UA83",
+   "libraryRoute": "EWR-DEL",
+   "adsbdbRoute": "DEL-EWR",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "UAL83"
+  },
+  {
+   "flightNumber": "UA82",
+   "libraryRoute": "DEL-EWR",
+   "adsbdbRoute": "EWR-DEL",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.410Z",
+   "via": "UAL82"
+  },
+  {
+   "flightNumber": "UA863",
+   "libraryRoute": "SFO-DEL",
+   "adsbdbRoute": "SFO-SYD",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAL863"
+  },
+  {
+   "flightNumber": "UA862",
+   "libraryRoute": "DEL-SFO",
+   "adsbdbRoute": "HKG-SFO",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAL862"
+  },
+  {
+   "flightNumber": "EK201",
+   "libraryRoute": "JFK-DXB",
+   "adsbdbRoute": "DXB-JFK",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAE201"
+  },
+  {
+   "flightNumber": "EK202",
+   "libraryRoute": "DXB-JFK",
+   "adsbdbRoute": "JFK-DXB",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAE202"
+  },
+  {
+   "flightNumber": "EK203",
+   "libraryRoute": "JFK-DXB",
+   "adsbdbRoute": "DXB-JFK",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAE203"
+  },
+  {
+   "flightNumber": "EK204",
+   "libraryRoute": "DXB-JFK",
+   "adsbdbRoute": "JFK-DXB",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAE204"
+  },
+  {
+   "flightNumber": "EK211",
+   "libraryRoute": "DXB-EWR",
+   "adsbdbRoute": "DXB-IAH",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAE211"
+  },
+  {
+   "flightNumber": "EK212",
+   "libraryRoute": "EWR-DXB",
+   "adsbdbRoute": "IAH-DXB",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAE212"
+  },
+  {
+   "flightNumber": "EK231",
+   "libraryRoute": "DXB-IAD",
+   "adsbdbRoute": "DXB-IAD",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAE231"
+  },
+  {
+   "flightNumber": "EK232",
+   "libraryRoute": "IAD-DXB",
+   "adsbdbRoute": "IAD-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.411Z",
+   "via": "UAE232"
+  },
+  {
+   "flightNumber": "EK225",
+   "libraryRoute": "DXB-SFO",
+   "adsbdbRoute": "DXB-SFO",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "UAE225"
+  },
+  {
+   "flightNumber": "EK226",
+   "libraryRoute": "SFO-DXB",
+   "adsbdbRoute": "SFO-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "UAE226"
+  },
+  {
+   "flightNumber": "EK215",
+   "libraryRoute": "DXB-LAX",
+   "adsbdbRoute": "DXB-LAX",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "UAE215"
+  },
+  {
+   "flightNumber": "EK216",
+   "libraryRoute": "LAX-DXB",
+   "adsbdbRoute": "LAX-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "UAE216"
+  },
+  {
+   "flightNumber": "EK229",
+   "libraryRoute": "DXB-SEA",
+   "adsbdbRoute": "DXB-SEA",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "UAE229"
+  },
+  {
+   "flightNumber": "EK230",
+   "libraryRoute": "SEA-DXB",
+   "adsbdbRoute": "SEA-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "UAE230"
+  },
+  {
+   "flightNumber": "EK237",
+   "libraryRoute": "DXB-BOS",
+   "adsbdbRoute": "DXB-BOS",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "UAE237"
+  },
+  {
+   "flightNumber": "EK238",
+   "libraryRoute": "BOS-DXB",
+   "adsbdbRoute": "BOS-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "UAE238"
+  },
+  {
+   "flightNumber": "QR701",
+   "libraryRoute": "DOH-JFK",
+   "adsbdbRoute": "DOH-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR701"
+  },
+  {
+   "flightNumber": "QR702",
+   "libraryRoute": "JFK-DOH",
+   "adsbdbRoute": "JFK-DOH",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR702"
+  },
+  {
+   "flightNumber": "QR707",
+   "libraryRoute": "DOH-IAD",
+   "adsbdbRoute": "DOH-IAD",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR707"
+  },
+  {
+   "flightNumber": "QR708",
+   "libraryRoute": "IAD-DOH",
+   "adsbdbRoute": "IAD-DOH",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR708"
+  },
+  {
+   "flightNumber": "QR735",
+   "libraryRoute": "DOH-SFO",
+   "adsbdbRoute": "GVA-LHR",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR735"
+  },
+  {
+   "flightNumber": "QR736",
+   "libraryRoute": "SFO-DOH",
+   "adsbdbRoute": "LHR-GVA",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR736"
+  },
+  {
+   "flightNumber": "QR739",
+   "libraryRoute": "DOH-LAX",
+   "adsbdbRoute": "DOH-LAX",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR739"
+  },
+  {
+   "flightNumber": "QR740",
+   "libraryRoute": "LAX-DOH",
+   "adsbdbRoute": "LAX-DOH",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR740"
+  },
+  {
+   "flightNumber": "QR727",
+   "libraryRoute": "DOH-SEA",
+   "adsbdbRoute": "DOH-PHL",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR727"
+  },
+  {
+   "flightNumber": "QR728",
+   "libraryRoute": "SEA-DOH",
+   "adsbdbRoute": "PHL-DOH",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR728"
+  },
+  {
+   "flightNumber": "QR721",
+   "libraryRoute": "DOH-DFW",
+   "adsbdbRoute": "DOH-ORD",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR721"
+  },
+  {
+   "flightNumber": "QR722",
+   "libraryRoute": "DFW-DOH",
+   "adsbdbRoute": "ORD-DOH",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "QTR722"
+  },
+  {
+   "flightNumber": "EY11",
+   "libraryRoute": "AUH-JFK",
+   "adsbdbRoute": "AUH-LHR",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.412Z",
+   "via": "ETD11"
+  },
+  {
+   "flightNumber": "EY12",
+   "libraryRoute": "JFK-AUH",
+   "adsbdbRoute": "LHR-AUH",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "ETD12"
+  },
+  {
+   "flightNumber": "TK1",
+   "libraryRoute": "IST-JFK",
+   "adsbdbRoute": "IST-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "THY1"
+  },
+  {
+   "flightNumber": "TK2",
+   "libraryRoute": "JFK-IST",
+   "adsbdbRoute": "JFK-IST",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "THY2"
+  },
+  {
+   "flightNumber": "TK79",
+   "libraryRoute": "IST-SFO",
+   "adsbdbRoute": "IST-SFO",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "THY79"
+  },
+  {
+   "flightNumber": "TK80",
+   "libraryRoute": "SFO-IST",
+   "adsbdbRoute": "IST-JNB",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "THY80"
+  },
+  {
+   "flightNumber": "TK9",
+   "libraryRoute": "IST-LAX",
+   "adsbdbRoute": "IST-LAX",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "THY9"
+  },
+  {
+   "flightNumber": "TK10",
+   "libraryRoute": "LAX-IST",
+   "adsbdbRoute": "LAX-IST",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "THY10"
+  },
+  {
+   "flightNumber": "TK33",
+   "libraryRoute": "IST-IAD",
+   "adsbdbRoute": "IST-IAH",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "THY33"
+  },
+  {
+   "flightNumber": "TK34",
+   "libraryRoute": "IAD-IST",
+   "adsbdbRoute": "IAH-IST",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "THY34"
+  },
+  {
+   "flightNumber": "EK927",
+   "libraryRoute": "DXB-CAI",
+   "adsbdbRoute": "DXB-CAI",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "UAE927"
+  },
+  {
+   "flightNumber": "EK928",
+   "libraryRoute": "CAI-DXB",
+   "adsbdbRoute": "CAI-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "UAE928"
+  },
+  {
+   "flightNumber": "AT200",
+   "libraryRoute": "CMN-JFK",
+   "adsbdbRoute": "CMN-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "RAM200"
+  },
+  {
+   "flightNumber": "AT201",
+   "libraryRoute": "JFK-CMN",
+   "adsbdbRoute": "JFK-CMN",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "RAM201"
+  },
+  {
+   "flightNumber": "MS986",
+   "libraryRoute": "CAI-JFK",
+   "adsbdbRoute": "JFK-CAI",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "MSR986"
+  },
+  {
+   "flightNumber": "MS985",
+   "libraryRoute": "JFK-CAI",
+   "adsbdbRoute": "CAI-JFK",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.413Z",
+   "via": "MSR985"
+  },
+  {
+   "flightNumber": "BA117",
+   "libraryRoute": "JFK-LHR",
+   "adsbdbRoute": "LHR-JFK",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "BAW117"
+  },
+  {
+   "flightNumber": "BA112",
+   "libraryRoute": "LHR-JFK",
+   "adsbdbRoute": "JFK-LHR",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "BAW112"
+  },
+  {
+   "flightNumber": "BA283",
+   "libraryRoute": "SFO-LHR",
+   "adsbdbRoute": "LHR-LAX",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "BAW283"
+  },
+  {
+   "flightNumber": "BA286",
+   "libraryRoute": "LHR-SFO",
+   "adsbdbRoute": "SFO-LHR",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "BAW286"
+  },
+  {
+   "flightNumber": "BA269",
+   "libraryRoute": "LAX-LHR",
+   "adsbdbRoute": "LHR-LAX",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "BAW269"
+  },
+  {
+   "flightNumber": "BA268",
+   "libraryRoute": "LHR-LAX",
+   "adsbdbRoute": "LAX-LHR",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "BAW268"
+  },
+  {
+   "flightNumber": "BA49",
+   "libraryRoute": "SEA-LHR",
+   "adsbdbRoute": "LHR-SEA",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "BAW49"
+  },
+  {
+   "flightNumber": "BA48",
+   "libraryRoute": "LHR-SEA",
+   "adsbdbRoute": "SEA-LHR",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "BAW48"
+  },
+  {
+   "flightNumber": "AF7",
+   "libraryRoute": "JFK-CDG",
+   "adsbdbRoute": "JFK-CDG",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "AFR7"
+  },
+  {
+   "flightNumber": "AF8",
+   "libraryRoute": "CDG-JFK",
+   "adsbdbRoute": "CDG-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "AFR8"
+  },
+  {
+   "flightNumber": "AF83",
+   "libraryRoute": "SFO-CDG",
+   "adsbdbRoute": "SFO-CDG",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "AFR83"
+  },
+  {
+   "flightNumber": "AF84",
+   "libraryRoute": "CDG-SFO",
+   "adsbdbRoute": "CDG-SFO",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "AFR84"
+  },
+  {
+   "flightNumber": "LH400",
+   "libraryRoute": "JFK-FRA",
+   "adsbdbRoute": "FRA-JFK",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "DLH400"
+  },
+  {
+   "flightNumber": "LH401",
+   "libraryRoute": "FRA-JFK",
+   "adsbdbRoute": "JFK-FRA",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "DLH401"
+  },
+  {
+   "flightNumber": "LH455",
+   "libraryRoute": "FRA-SFO",
+   "adsbdbRoute": "SFO-FRA",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "DLH455"
+  },
+  {
+   "flightNumber": "LH454",
+   "libraryRoute": "SFO-FRA",
+   "adsbdbRoute": "FRA-SFO",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.414Z",
+   "via": "DLH454"
+  },
+  {
+   "flightNumber": "KL642",
+   "libraryRoute": "JFK-AMS",
+   "adsbdbRoute": "JFK-AMS",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "KLM642"
+  },
+  {
+   "flightNumber": "KL641",
+   "libraryRoute": "AMS-JFK",
+   "adsbdbRoute": "AMS-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "KLM641"
+  },
+  {
+   "flightNumber": "KL605",
+   "libraryRoute": "AMS-SFO",
+   "adsbdbRoute": "AMS-SFO",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "KLM605"
+  },
+  {
+   "flightNumber": "KL606",
+   "libraryRoute": "SFO-AMS",
+   "adsbdbRoute": "SFO-AMS",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "KLM606"
+  },
+  {
+   "flightNumber": "IB6251",
+   "libraryRoute": "JFK-MAD",
+   "adsbdbRoute": "MAD-JFK",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "IBE6251"
+  },
+  {
+   "flightNumber": "IB6250",
+   "libraryRoute": "MAD-JFK",
+   "adsbdbRoute": "JFK-MAD",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "IBE6250"
+  },
+  {
+   "flightNumber": "UA901",
+   "libraryRoute": "IAD-LHR",
+   "adsbdbRoute": "SFO-LHR",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "UAL901"
+  },
+  {
+   "flightNumber": "UA900",
+   "libraryRoute": "LHR-IAD",
+   "adsbdbRoute": "LHR-SFO",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "UAL900"
+  },
+  {
+   "flightNumber": "EK2",
+   "libraryRoute": "LHR-DXB",
+   "adsbdbRoute": "LHR-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "UAE2"
+  },
+  {
+   "flightNumber": "EK1",
+   "libraryRoute": "DXB-LHR",
+   "adsbdbRoute": "DXB-LHR",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "UAE1"
+  },
+  {
+   "flightNumber": "BA107",
+   "libraryRoute": "LHR-DXB",
+   "adsbdbRoute": "LHR-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "BAW107"
+  },
+  {
+   "flightNumber": "BA106",
+   "libraryRoute": "DXB-LHR",
+   "adsbdbRoute": "DXB-LHR",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "BAW106"
+  },
+  {
+   "flightNumber": "QR7",
+   "libraryRoute": "LHR-DOH",
+   "adsbdbRoute": "DOH-LHR",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "QTR7"
+  },
+  {
+   "flightNumber": "QR8",
+   "libraryRoute": "DOH-LHR",
+   "adsbdbRoute": "LHR-DOH",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:17.415Z",
+   "via": "QTR8"
+  },
+  {
+   "flightNumber": "KQ2",
+   "libraryRoute": "JFK-NBO",
+   "adsbdbRoute": null,
+   "status": "not-found",
+   "checkedAt": "2026-10-12T07:14:18.200Z"
+  },
+  {
+   "flightNumber": "KQ3",
+   "libraryRoute": "NBO-JFK",
+   "adsbdbRoute": null,
+   "status": "not-found",
+   "checkedAt": "2026-10-12T07:14:18.951Z"
+  },
+  {
+   "flightNumber": "ET500",
+   "libraryRoute": "IAD-ADD",
+   "adsbdbRoute": "DUB-IAD",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.951Z",
+   "via": "ETH500"
+  },
+  {
+   "flightNumber": "ET501",
+   "libraryRoute": "ADD-IAD",
+   "adsbdbRoute": "IAD-ADD",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.951Z",
+   "via": "ETH501"
+  },
+  {
+   "flightNumber": "ET600",
+   "libraryRoute": "ADD-DXB",
+   "adsbdbRoute": "ADD-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "ETH600"
+  },
+  {
+   "flightNumber": "ET601",
+   "libraryRoute": "DXB-ADD",
+   "adsbdbRoute": "DXB-ADD",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "ETH601"
+  },
+  {
+   "flightNumber": "DL59",
+   "libraryRoute": "JFK-ACC",
+   "adsbdbRoute": "LHR-BOS",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "DAL59"
+  },
+  {
+   "flightNumber": "DL58",
+   "libraryRoute": "ACC-JFK",
+   "adsbdbRoute": "BOS-LHR",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "DAL58"
+  },
+  {
+   "flightNumber": "DL57",
+   "libraryRoute": "ATL-LOS",
+   "adsbdbRoute": "BOM-DTW",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "DAL57"
+  },
+  {
+   "flightNumber": "DL56",
+   "libraryRoute": "LOS-ATL",
+   "adsbdbRoute": "SLC-AMS",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "DAL56"
+  },
+  {
+   "flightNumber": "EK783",
+   "libraryRoute": "DXB-LOS",
+   "adsbdbRoute": "DXB-LOS",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "UAE783"
+  },
+  {
+   "flightNumber": "EK784",
+   "libraryRoute": "LOS-DXB",
+   "adsbdbRoute": "LOS-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "UAE784"
+  },
+  {
+   "flightNumber": "DL200",
+   "libraryRoute": "ATL-JNB",
+   "adsbdbRoute": "ATL-JNB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "DAL200"
+  },
+  {
+   "flightNumber": "DL201",
+   "libraryRoute": "JNB-ATL",
+   "adsbdbRoute": "JNB-ATL",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "DAL201"
+  },
+  {
+   "flightNumber": "SA204",
+   "libraryRoute": "JFK-JNB",
+   "adsbdbRoute": "JFK-JNB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "SAA204"
+  },
+  {
+   "flightNumber": "SA203",
+   "libraryRoute": "JNB-JFK",
+   "adsbdbRoute": "JNB-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "SAA203"
+  },
+  {
+   "flightNumber": "EK761",
+   "libraryRoute": "DXB-JNB",
+   "adsbdbRoute": "DXB-JNB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "UAE761"
+  },
+  {
+   "flightNumber": "EK762",
+   "libraryRoute": "JNB-DXB",
+   "adsbdbRoute": "JNB-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "UAE762"
+  },
+  {
+   "flightNumber": "EK773",
+   "libraryRoute": "DXB-CPT",
+   "adsbdbRoute": "CPT-DXB",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.952Z",
+   "via": "UAE773"
+  },
+  {
+   "flightNumber": "EK774",
+   "libraryRoute": "CPT-DXB",
+   "adsbdbRoute": null,
+   "status": "not-found",
+   "checkedAt": "2026-10-12T07:14:18.953Z"
+  },
+  {
+   "flightNumber": "AA930",
+   "libraryRoute": "JFK-GRU",
+   "adsbdbRoute": "GRU-MIA",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.953Z",
+   "via": "AAL930"
+  },
+  {
+   "flightNumber": "AA931",
+   "libraryRoute": "GRU-JFK",
+   "adsbdbRoute": "MIA-EZE",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.953Z",
+   "via": "AAL931"
+  },
+  {
+   "flightNumber": "AA950",
+   "libraryRoute": "JFK-EZE",
+   "adsbdbRoute": "GRU-JFK",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.953Z",
+   "via": "AAL950"
+  },
+  {
+   "flightNumber": "AA951",
+   "libraryRoute": "EZE-JFK",
+   "adsbdbRoute": "JFK-GRU",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.953Z",
+   "via": "AAL951"
+  },
+  {
+   "flightNumber": "LA532",
+   "libraryRoute": "JFK-SCL",
+   "adsbdbRoute": "SCL-JFK",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.953Z",
+   "via": "LAN532"
+  },
+  {
+   "flightNumber": "LA533",
+   "libraryRoute": "SCL-JFK",
+   "adsbdbRoute": "JFK-SCL",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.953Z",
+   "via": "LAN533"
+  },
+  {
+   "flightNumber": "AV22",
+   "libraryRoute": "JFK-BOG",
+   "adsbdbRoute": "BOG-MEX",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.953Z",
+   "via": "AVA22"
+  },
+  {
+   "flightNumber": "AV21",
+   "libraryRoute": "BOG-JFK",
+   "adsbdbRoute": "JFK-BOG",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.953Z",
+   "via": "AVA21"
+  },
+  {
+   "flightNumber": "LA2465",
+   "libraryRoute": "JFK-LIM",
+   "adsbdbRoute": "LIM-AEP",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "LAN2465"
+  },
+  {
+   "flightNumber": "LA2466",
+   "libraryRoute": "LIM-JFK",
+   "adsbdbRoute": "EZE-LIM",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "LAN2466"
+  },
+  {
+   "flightNumber": "AV15",
+   "libraryRoute": "LAX-BOG",
+   "adsbdbRoute": "MAD-BOG",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "AVA15"
+  },
+  {
+   "flightNumber": "AV16",
+   "libraryRoute": "BOG-LAX",
+   "adsbdbRoute": "BOG-MAD",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "AVA16"
+  },
+  {
+   "flightNumber": "EK247",
+   "libraryRoute": "DXB-GRU",
+   "adsbdbRoute": "GIG-EZE",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAE247"
+  },
+  {
+   "flightNumber": "EK248",
+   "libraryRoute": "GRU-DXB",
+   "adsbdbRoute": "GIG-DXB",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAE248"
+  },
+  {
+   "flightNumber": "QF12",
+   "libraryRoute": "LAX-SYD",
+   "adsbdbRoute": "LAX-SYD",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "QFA12"
+  },
+  {
+   "flightNumber": "QF11",
+   "libraryRoute": "SYD-LAX",
+   "adsbdbRoute": "SYD-LAX",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "QFA11"
+  },
+  {
+   "flightNumber": "QF94",
+   "libraryRoute": "LAX-MEL",
+   "adsbdbRoute": "LAX-MEL",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "QFA94"
+  },
+  {
+   "flightNumber": "QF93",
+   "libraryRoute": "MEL-LAX",
+   "adsbdbRoute": "MEL-LAX",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "QFA93"
+  },
+  {
+   "flightNumber": "UA839",
+   "libraryRoute": "SFO-SYD",
+   "adsbdbRoute": "LAX-SYD",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAL839"
+  },
+  {
+   "flightNumber": "UA840",
+   "libraryRoute": "SYD-SFO",
+   "adsbdbRoute": "MEL-LAX",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAL840"
+  },
+  {
+   "flightNumber": "UA100",
+   "libraryRoute": "SFO-BNE",
+   "adsbdbRoute": "SYD-IAH",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAL100"
+  },
+  {
+   "flightNumber": "UA101",
+   "libraryRoute": "BNE-SFO",
+   "adsbdbRoute": "IAH-SYD",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAL101"
+  },
+  {
+   "flightNumber": "EK412",
+   "libraryRoute": "DXB-SYD",
+   "adsbdbRoute": "SYD-CHC",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAE412"
+  },
+  {
+   "flightNumber": "EK413",
+   "libraryRoute": "SYD-DXB",
+   "adsbdbRoute": "CHC-SYD",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAE413"
+  },
+  {
+   "flightNumber": "EK408",
+   "libraryRoute": "DXB-MEL",
+   "adsbdbRoute": "DXB-MEL",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAE408"
+  },
+  {
+   "flightNumber": "EK407",
+   "libraryRoute": "MEL-DXB",
+   "adsbdbRoute": "MEL-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAE407"
+  },
+  {
+   "flightNumber": "EK430",
+   "libraryRoute": "DXB-BNE",
+   "adsbdbRoute": "DXB-BNE",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAE430"
+  },
+  {
+   "flightNumber": "EK431",
+   "libraryRoute": "BNE-DXB",
+   "adsbdbRoute": "BNE-DXB",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "UAE431"
+  },
+  {
+   "flightNumber": "NZ6",
+   "libraryRoute": "SFO-AKL",
+   "adsbdbRoute": "AKL-LAX",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "ANZ6"
+  },
+  {
+   "flightNumber": "NZ5",
+   "libraryRoute": "AKL-SFO",
+   "adsbdbRoute": "LAX-AKL",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "ANZ5"
+  },
+  {
+   "flightNumber": "NZ2",
+   "libraryRoute": "LAX-AKL",
+   "adsbdbRoute": "LAX-AKL",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.954Z",
+   "via": "ANZ2"
+  },
+  {
+   "flightNumber": "NZ1",
+   "libraryRoute": "AKL-LAX",
+   "adsbdbRoute": "AKL-LAX",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "ANZ1"
+  },
+  {
+   "flightNumber": "NZ8",
+   "libraryRoute": "JFK-AKL",
+   "adsbdbRoute": "AKL-SFO",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "ANZ8"
+  },
+  {
+   "flightNumber": "NZ7",
+   "libraryRoute": "AKL-JFK",
+   "adsbdbRoute": "SFO-AKL",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "ANZ7"
+  },
+  {
+   "flightNumber": "SQ21",
+   "libraryRoute": "EWR-SIN",
+   "adsbdbRoute": "EWR-SIN",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "SIA21"
+  },
+  {
+   "flightNumber": "SQ22",
+   "libraryRoute": "SIN-EWR",
+   "adsbdbRoute": "SIN-EWR",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "SIA22"
+  },
+  {
+   "flightNumber": "CX840",
+   "libraryRoute": "JFK-HKG",
+   "adsbdbRoute": "HKG-JFK",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "CPA840"
+  },
+  {
+   "flightNumber": "CX841",
+   "libraryRoute": "HKG-JFK",
+   "adsbdbRoute": "JFK-HKG",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "CPA841"
+  },
+  {
+   "flightNumber": "AA177",
+   "libraryRoute": "DFW-HKG",
+   "adsbdbRoute": "JFK-SFO",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "AAL177"
+  },
+  {
+   "flightNumber": "AA178",
+   "libraryRoute": "HKG-DFW",
+   "adsbdbRoute": "DCA-BOS",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "AAL178"
+  },
+  {
+   "flightNumber": "SQ32",
+   "libraryRoute": "SFO-SIN",
+   "adsbdbRoute": "SIN-SFO",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.955Z",
+   "via": "SIA32"
+  },
+  {
+   "flightNumber": "SQ31",
+   "libraryRoute": "SIN-SFO",
+   "adsbdbRoute": "SFO-SIN",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "SIA31"
+  },
+  {
+   "flightNumber": "PR102",
+   "libraryRoute": "MNL-SFO",
+   "adsbdbRoute": "MNL-LAX",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "PAL102"
+  },
+  {
+   "flightNumber": "PR103",
+   "libraryRoute": "SFO-MNL",
+   "adsbdbRoute": "LAX-MNL",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "PAL103"
+  },
+  {
+   "flightNumber": "PR126",
+   "libraryRoute": "MNL-JFK",
+   "adsbdbRoute": "MNL-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "PAL126"
+  },
+  {
+   "flightNumber": "PR127",
+   "libraryRoute": "JFK-MNL",
+   "adsbdbRoute": "JFK-YVR",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "PAL127"
+  },
+  {
+   "flightNumber": "EK343",
+   "libraryRoute": "DXB-KUL",
+   "adsbdbRoute": "KUL-DXB",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "UAE343"
+  },
+  {
+   "flightNumber": "EK344",
+   "libraryRoute": "KUL-DXB",
+   "adsbdbRoute": "DXB-KUL",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "UAE344"
+  },
+  {
+   "flightNumber": "CX872",
+   "libraryRoute": "SFO-HKG",
+   "adsbdbRoute": "HKG-SFO",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "CPA872"
+  },
+  {
+   "flightNumber": "CX873",
+   "libraryRoute": "HKG-SFO",
+   "adsbdbRoute": "SFO-HKG",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "CPA873"
+  },
+  {
+   "flightNumber": "CX880",
+   "libraryRoute": "LAX-HKG",
+   "adsbdbRoute": "HKG-LAX",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "CPA880"
+  },
+  {
+   "flightNumber": "CX881",
+   "libraryRoute": "HKG-LAX",
+   "adsbdbRoute": "LAX-HKG",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "CPA881"
+  },
+  {
+   "flightNumber": "JL6",
+   "libraryRoute": "JFK-HND",
+   "adsbdbRoute": "HND-JFK",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "JAL6"
+  },
+  {
+   "flightNumber": "JL5",
+   "libraryRoute": "HND-JFK",
+   "adsbdbRoute": "JFK-HND",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "JAL5"
+  },
+  {
+   "flightNumber": "NH10",
+   "libraryRoute": "JFK-HND",
+   "adsbdbRoute": "NRT-JFK",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "ANA10"
+  },
+  {
+   "flightNumber": "NH9",
+   "libraryRoute": "HND-JFK",
+   "adsbdbRoute": "JFK-NRT",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "ANA9"
+  },
+  {
+   "flightNumber": "UA837",
+   "libraryRoute": "SFO-HND",
+   "adsbdbRoute": "SFO-NRT",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "UAL837"
+  },
+  {
+   "flightNumber": "UA838",
+   "libraryRoute": "HND-SFO",
+   "adsbdbRoute": "NRT-SFO",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.956Z",
+   "via": "UAL838"
+  },
+  {
+   "flightNumber": "NH106",
+   "libraryRoute": "LAX-HND",
+   "adsbdbRoute": "HND-LAX",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "ANA106"
+  },
+  {
+   "flightNumber": "NH105",
+   "libraryRoute": "HND-LAX",
+   "adsbdbRoute": "LAX-HND",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "ANA105"
+  },
+  {
+   "flightNumber": "UA79",
+   "libraryRoute": "EWR-NRT",
+   "adsbdbRoute": "EWR-NRT",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "UAL79"
+  },
+  {
+   "flightNumber": "UA78",
+   "libraryRoute": "NRT-EWR",
+   "adsbdbRoute": "NRT-EWR",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "UAL78"
+  },
+  {
+   "flightNumber": "KE82",
+   "libraryRoute": "JFK-ICN",
+   "adsbdbRoute": "JFK-ICN",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "KAL82"
+  },
+  {
+   "flightNumber": "KE81",
+   "libraryRoute": "ICN-JFK",
+   "adsbdbRoute": "ICN-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "KAL81"
+  },
+  {
+   "flightNumber": "KE12",
+   "libraryRoute": "LAX-ICN",
+   "adsbdbRoute": "LAX-ICN",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "KAL12"
+  },
+  {
+   "flightNumber": "KE11",
+   "libraryRoute": "ICN-LAX",
+   "adsbdbRoute": "ICN-LAX",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "KAL11"
+  },
+  {
+   "flightNumber": "KE24",
+   "libraryRoute": "SFO-ICN",
+   "adsbdbRoute": "SFO-ICN",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "KAL24"
+  },
+  {
+   "flightNumber": "KE23",
+   "libraryRoute": "ICN-SFO",
+   "adsbdbRoute": "ICN-SFO",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "KAL23"
+  },
+  {
+   "flightNumber": "BR12",
+   "libraryRoute": "LAX-TPE",
+   "adsbdbRoute": "TPE-LAX",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "EVA12"
+  },
+  {
+   "flightNumber": "BR11",
+   "libraryRoute": "TPE-LAX",
+   "adsbdbRoute": "LAX-TPE",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "EVA11"
+  },
+  {
+   "flightNumber": "BR8",
+   "libraryRoute": "SFO-TPE",
+   "adsbdbRoute": "TPE-SFO",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "EVA8"
+  },
+  {
+   "flightNumber": "BR7",
+   "libraryRoute": "TPE-SFO",
+   "adsbdbRoute": "SFO-TPE",
+   "status": "mismatch",
+   "mismatchKind": "reversed",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "EVA7"
+  },
+  {
+   "flightNumber": "MU587",
+   "libraryRoute": "LAX-PVG",
+   "adsbdbRoute": "PVG-JFK",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "CES587"
+  },
+  {
+   "flightNumber": "MU588",
+   "libraryRoute": "PVG-LAX",
+   "adsbdbRoute": "JFK-PVG",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "CES588"
+  },
+  {
+   "flightNumber": "UA857",
+   "libraryRoute": "SFO-PVG",
+   "adsbdbRoute": "ICN-PVG",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "UAL857"
+  },
+  {
+   "flightNumber": "UA858",
+   "libraryRoute": "PVG-SFO",
+   "adsbdbRoute": "ICN-SFO",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "UAL858"
+  },
+  {
+   "flightNumber": "AA1",
+   "libraryRoute": "JFK-LAX",
+   "adsbdbRoute": "JFK-LAX",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.957Z",
+   "via": "AAL1"
+  },
+  {
+   "flightNumber": "AA2",
+   "libraryRoute": "LAX-JFK",
+   "adsbdbRoute": "LAX-JFK",
+   "status": "match",
+   "checkedAt": "2026-10-12T07:14:18.958Z",
+   "via": "AAL2"
+  },
+  {
+   "flightNumber": "UA1",
+   "libraryRoute": "EWR-SFO",
+   "adsbdbRoute": "SFO-SIN",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.958Z",
+   "via": "UAL1"
+  },
+  {
+   "flightNumber": "UA2",
+   "libraryRoute": "SFO-EWR",
+   "adsbdbRoute": "SIN-SFO",
+   "status": "mismatch",
+   "mismatchKind": "different-route",
+   "checkedAt": "2026-10-12T07:14:18.958Z",
+   "via": "UAL2"
+  }
+ ]
+}

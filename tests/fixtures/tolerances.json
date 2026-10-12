@@ -1,0 +1,6 @@
+{
+  "JL5_2026-10-11_adsblol": {
+    "toleranceMin": 90,
+    "reason": "JFK-HND flown over Alaska/Arctic (up to ~470 km off the great circle) with a 5 h ADS-B hole over the Arctic. Dhuhr (a 'windowRepeated' anomaly) is crossed at 67N; measured delta -70 min, i.e. the model is least accurate for high-latitude routes."
+  }
+}

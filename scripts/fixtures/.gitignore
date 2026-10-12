@@ -1,0 +1,2 @@
+# HTTP response cache (can be hundreds of MB of raw traces)
+.cache/

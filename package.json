@@ -11,7 +11,12 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build:airports": "node scripts/build-airports.mjs"
+    "build:airports": "node scripts/build-airports.mjs",
+    "fixtures:verify": "NODE_USE_ENV_PROXY=1 vite-node scripts/fixtures/verify-library.ts",
+    "fixtures:live": "NODE_USE_ENV_PROXY=1 vite-node scripts/fixtures/capture-live.ts",
+    "fixtures:history": "NODE_USE_ENV_PROXY=1 vite-node scripts/fixtures/fetch-history.ts",
+    "typecheck:scripts": "tsc --noEmit -p scripts/fixtures/tsconfig.json",
+    "route-report": "vite-node scripts/route-report.ts"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

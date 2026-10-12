@@ -1,0 +1,4 @@
+# FlightAware AeroAPI and OpenSky data come with redistribution restrictions: keep them local.
+# (git add -f a specific file if you have verified the terms allow publishing it.)
+tracks/*_flightaware.json
+tracks/*_opensky.json
