@@ -23,6 +23,7 @@
     "jsdom": "^29.1.1",
     "typescript": "~5.9",
     "vite": "^6.4.4",
-    "vitest": "^3.2.7"
+    "vite-node": "^6.0.0",
+    "vitest": "^5.0.3"
   }
 }
