@@ -211,7 +211,7 @@ lead; "Agent" = choice made inside a module by a sub-agent and accepted by the l
 |---|---|---|
 | D-D1 | Airports: OurAirports (public domain), large/medium + any with scheduled service and IATA; tz via `tz-lookup` at build time → 5,403 airports, 527 KB JSON | Lead + Agent |
 | D-D2 | Flight library: 223 flights, 14 sample itineraries; schedules **representative** (anchored to the October timetable; other DST periods may shift block time ≈1 h). Lower-confidence flight numbers listed in `flights.ts`; no LHR–KHI flight used (SFO→LHR→DXB→KHI instead) | Agent |
-| D-D3 | Library is verified against adsbdb.com routes by `scripts/fixtures/verify-library.ts`; mismatches get fixed in `flights.ts` (e.g. suspected LH400/LH401 direction swap) | Lead |
+| D-D3 | Library verified against adsbdb.com: **98 match, 122 mismatch (52 reversed direction, 70 different city pair), 3 not found** — e.g. LH400 is FRA→JFK; live ADS-B confirmed JL5 JFK→HND. Correction in progress: evidence order live ADS-B > adsbdb > knowledge; every entry gets a `verification` record; unconfirmable flight numbers are replaced or removed, never kept | Lead |
 | D-D4 | Itinerary parser: DD/MM for ambiguous numeric dates; IATA codes accepted only in context and only if known; stop-words (THE, AND, CAN, …) never airports; "+1" markers; missing year inferred from weekday + reference date | Agent |
 
 ### 9.6 Online data, backend & AI
@@ -231,6 +231,8 @@ lead; "Agent" = choice made inside a module by a sub-agent and accepted by the l
 | D-Q2 | Route matrix: every library flight × 4 dates (equinoxes/solstices) × settings variants + all itineraries; asserts no NaN, chronological events in range. Default settings at 2-min step, other variants at 6-min (runtime) | Lead + Agent |
 | D-Q3 | **No vulnerable dependencies, including dev tooling.** Vitest 3 → 5.0.3 (root + worker) removed tinypool (GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr); `npm audit` = 0; CI fails on any audit finding (`--audit-level=low`); agents must keep new deps audit-clean | User |
 | D-Q4 | Reference values must be independently verified, never tuned to. Corrections made: Karachi 2026-03-21 = 05:19 / 06:35 / 12:39 / 17:01 (Hanafi) · 16:06 (Shafi'i) / 18:43 / 19:59 PKT (the lead's brief was ≈4 min late); KHI→SFO 12,991 km; KHI→DXB bearing 274.4° | Lead |
+| D-Q6 | Real-track findings (adsb.lol, 19 fixtures: 3 complete, 16 partial): DL56 events within ±13 min of the great-circle model (233 km max deviation); JL5 Dhuhr −70.5 min off at high latitude (466 km deviation) — the great-circle model is least accurate on high-latitude routes; SQ21 EWR→SIN actually flew over Europe (4,747 km off the polar great circle), so comparisons are asserted only when the real route stays within 600 km of the great circle. **Implication: for real trips, import or fetch the actual track where possible** | Agent G + Lead |
+| D-Q7 | OpenSky and FlightAware fixtures are gitignored by default (redistribution terms); adsb.lol fixtures are committed with ODbL attribution | Agent G, accepted by Lead |
 | D-Q5 | CI (GitHub Actions): audit, typecheck, tests, build, worker tests, deploy to GitHub Pages | Lead |
 
 ### 9.8 Repository & process
@@ -248,5 +250,6 @@ lead; "Agent" = choice made inside a module by a sub-agent and accepted by the l
 
 ### 9.10 Open engineering items (lead)
 * Continuous cruise-altitude cap for short flights (D-R2).
-* Apply library fixes from adsbdb verification (D-D3).
+* Apply library fixes from adsbdb verification (D-D3) — in progress.
+* Complete the 16 partial live fixtures (`npm run fixtures:live -- --flight …` after landing).
 * Verify live upstream response shapes (AeroDataBox, AeroAPI, OpenSky, adsb.lol, OpenRouter PDF plugin) once keys exist — current worker fixtures are written from documentation.
