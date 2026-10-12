@@ -1,0 +1,25 @@
+{
+  "name": "inflight-prayer-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stateless edge proxy for the in-flight prayer times app (flight lookups, tracks, AI itinerary extraction)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "openai": "^7.32.0",
+    "zod": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261012.1",
+    "typescript": "~5.9",
+    "vitest": "^3.2.7",
+    "wrangler": "^4.149.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "actual_distance": 20,
+  "positions": [
+    { "fa_flight_id": "UAE226-1760000000-schedule-1234p", "altitude": 0, "altitude_change": "-", "groundspeed": 12, "heading": 280, "latitude": 37.6188, "longitude": -122.375, "timestamp": "2026-10-12T19:00:00Z", "update_type": "A" },
+    { "altitude": 120, "altitude_change": "C", "groundspeed": 250, "heading": 330, "latitude": 37.9, "longitude": -122.6, "timestamp": "2026-10-12T19:10:00Z", "update_type": "A" },
+    { "altitude": 380, "altitude_change": "-", "groundspeed": 480, "heading": 20, "latitude": 45.1, "longitude": -121.2, "timestamp": "2026-10-12T19:50:00Z", "update_type": "A" },
+    { "altitude": 380, "altitude_change": "-", "groundspeed": 480, "heading": 20, "latitude": null, "longitude": -121.0, "timestamp": "2026-10-12T19:55:00Z", "update_type": "A" }
+  ]
+}

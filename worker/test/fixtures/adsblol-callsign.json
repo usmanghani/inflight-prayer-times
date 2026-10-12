@@ -1,0 +1,10 @@
+{
+  "ac": [
+    { "hex": "896183", "type": "adsb_icao", "flight": "UAE226  ", "r": "A6-EPJ", "t": "B77W", "alt_baro": 38000, "lat": 61.2, "lon": -101.4 }
+  ],
+  "msg": "No error",
+  "now": 1760305000000,
+  "total": 1,
+  "ctime": 1760305000000,
+  "ptime": 0
+}

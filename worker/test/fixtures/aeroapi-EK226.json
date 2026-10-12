@@ -1,0 +1,38 @@
+{
+  "flights": [
+    {
+      "ident": "UAE226",
+      "ident_icao": "UAE226",
+      "ident_iata": "EK226",
+      "fa_flight_id": "UAE226-1760000000-schedule-1234p",
+      "operator": "UAE",
+      "flight_number": "226",
+      "registration": "A6-EPJ",
+      "cancelled": false,
+      "diverted": false,
+      "origin": { "code": "KSFO", "code_icao": "KSFO", "code_iata": "SFO", "name": "San Francisco Intl" },
+      "destination": { "code": "OMDB", "code_icao": "OMDB", "code_iata": "DXB", "name": "Dubai Intl" },
+      "scheduled_out": "2026-10-12T18:35:00Z",
+      "estimated_out": "2026-10-12T18:51:00Z",
+      "actual_out": "2026-10-12T18:50:00Z",
+      "scheduled_off": "2026-10-12T18:50:00Z",
+      "actual_off": "2026-10-12T19:08:00Z",
+      "scheduled_on": "2026-10-13T11:15:00Z",
+      "actual_on": null,
+      "scheduled_in": "2026-10-13T11:25:00Z",
+      "actual_in": null,
+      "aircraft_type": "B77W"
+    },
+    {
+      "ident": "UAE226",
+      "ident_iata": "EK226",
+      "fa_flight_id": "UAE226-1759000000-schedule-9999p",
+      "cancelled": true,
+      "origin": { "code_iata": "SFO" },
+      "destination": { "code_iata": "DXB" },
+      "scheduled_out": "2026-10-11T18:35:00Z"
+    }
+  ],
+  "links": null,
+  "num_pages": 1
+}

@@ -1,0 +1,53 @@
+# Cloudflare Worker: stateless edge proxy for the in-flight prayer times app.
+# See ../docs/BACKEND.md for the full setup guide.
+name = "inflight-prayer-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Comma-separated list of browser origins allowed to call the API (exact match,
+# no trailing slash). Add your own deployment origin here.
+ALLOWED_ORIGINS = "http://localhost:5173,https://usmanghani.github.io"
+# Default LLM provider for itinerary / route parsing is OpenRouter with a cheap
+# vision-capable model. Any OpenRouter model id that supports image input and
+# structured outputs works here.
+OPENROUTER_MODEL = "deepseek/deepseek-v4.1-flash"
+# Models a client may request per call (comma list); anything else is rejected.
+OPENROUTER_ALLOWED_MODELS = "deepseek/deepseek-v4.1-flash,qwen/qwen3.8-flash,google/gemini-3.1-flash-lite"
+# Optional frontier alternative: used when provider = anthropic.
+CLAUDE_MODEL = "claude-opus-5-5"
+# Vision model used when provider = openai (optional provider). Change freely:
+# any OpenAI model that supports image input + structured outputs will work.
+OPENAI_MODEL = "gpt-5-mini"
+
+# ---------------------------------------------------------------------------
+# Rate limiting (Workers Rate Limiting API). `period` must be 10 or 60 seconds.
+# `namespace_id` is any unique positive integer string in your account.
+# The code works fine if these bindings are removed: it just skips limiting.
+# (Older wrangler versions spell this `[[unsafe.bindings]]` with
+#  `type = "ratelimit"`; wrangler >= 4 uses `[[ratelimits]]` as below.)
+# ---------------------------------------------------------------------------
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "7001"
+simple = { limit = 60, period = 60 }
+
+[[ratelimits]]
+name = "RATE_LIMITER_EXTRACT"
+namespace_id = "7002"
+simple = { limit = 8, period = 60 }
+
+# ---------------------------------------------------------------------------
+# Secrets (never commit; set with `npx wrangler secret put NAME`, or put them
+# in worker/.dev.vars for `wrangler dev`). All are optional: each one enables
+# one upstream provider.
+#
+#   OPENROUTER_API_KEY       openrouter.ai key          (DEFAULT itinerary/route parsing)
+#   ANTHROPIC_API_KEY        Anthropic console key      (optional extraction provider)
+#   OPENAI_API_KEY           OpenAI key                 (optional extraction provider)
+#   AERODATABOX_API_KEY      RapidAPI key for AeroDataBox (flight lookup)
+#   FLIGHTAWARE_API_KEY      FlightAware AeroAPI v4 key   (lookup + track)
+#   OPENSKY_CLIENT_ID        OpenSky API client id        (track)
+#   OPENSKY_CLIENT_SECRET    OpenSky API client secret    (track)
+# ---------------------------------------------------------------------------

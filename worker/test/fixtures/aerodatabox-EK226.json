@@ -1,0 +1,33 @@
+[
+  {
+    "greatCircleDistance": { "meter": 13040320, "km": 13040.32, "mile": 8103.0, "nm": 7041.0, "feet": 42782000 },
+    "departure": {
+      "airport": { "icao": "KSFO", "iata": "SFO", "name": "San Francisco", "timeZone": "America/Los_Angeles" },
+      "scheduledTime": { "utc": "2026-10-12 18:35Z", "local": "2026-10-12 11:35-07:00" },
+      "revisedTime": { "utc": "2026-10-12 18:51Z", "local": "2026-10-12 11:51-07:00" },
+      "runwayTime": { "utc": "2026-10-12 19:08Z", "local": "2026-10-12 12:08-07:00" },
+      "terminal": "I",
+      "quality": ["Basic", "Live"]
+    },
+    "arrival": {
+      "airport": { "icao": "OMDB", "iata": "DXB", "name": "Dubai", "timeZone": "Asia/Dubai" },
+      "scheduledTime": { "utc": "2026-10-13 11:25Z", "local": "2026-10-13 15:25+04:00" },
+      "revisedTime": { "utc": "2026-10-13 11:10Z", "local": "2026-10-13 15:10+04:00" },
+      "terminal": "3",
+      "quality": ["Basic"]
+    },
+    "lastUpdatedUtc": "2026-10-12 19:20Z",
+    "number": "EK 226",
+    "status": "EnRoute",
+    "codeshareStatus": "IsOperator",
+    "isCargo": false,
+    "aircraft": { "reg": "A6-EPJ", "modeS": "896183", "model": "Boeing 777-300ER" },
+    "airline": { "name": "Emirates" }
+  },
+  {
+    "departure": { "airport": { "iata": "SFO" }, "scheduledTime": { "utc": "2026-10-12 18:35Z" } },
+    "arrival": { "airport": { "iata": "DXB" }, "scheduledTime": { "utc": "2026-10-13 11:25Z" } },
+    "number": "QF 8226",
+    "codeshareStatus": "IsCodeshared"
+  }
+]

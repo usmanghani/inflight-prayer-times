@@ -1,0 +1,14 @@
+{
+  "id": "gen-123",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "{\"legs\":[{\"flightNumber\":\"EK 226\",\"from\":\"sfo\",\"to\":\"DXB\",\"depDate\":\"2026-10-12\",\"depTime\":\"11:35\",\"arrDate\":\"2026-10-13\",\"arrTime\":\"15:25\",\"confidence\":0.93,\"raw\":[\"EK226 SFO 11:35 DXB 15:25 +1\"]},{\"flightNumber\":\"EK 601\",\"from\":\"DXB\",\"to\":\"KHI\",\"depDate\":\"2026-10-13\",\"depTime\":\"7:45\",\"arrDate\":null,\"arrTime\":\"25:99\",\"confidence\":1.4,\"raw\":[\"EK601 DXB 7:45 KHI\"]}],\"warnings\":[\"Second leg time is blurry\"]}"
+      }
+    }
+  ],
+  "usage": { "prompt_tokens": 1500, "completion_tokens": 200 }
+}
