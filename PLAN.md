@@ -32,7 +32,8 @@ flying west faster than the sun at high latitude, windows that repeat or skip,
 | Isha by interval | minutes after Maghrib (Umm al-Qura 90) | off |
 | Maghrib angle / interval | for Ja'fari/Tehran (4° / 4.5°) | sunset |
 | Midnight | Standard (sunset→sunrise) / Ja'fari (sunset→fajr) | Standard |
-| High-latitude rule | Angle-based, 1/7 of night, Middle of night, Nearest latitude (48.5°), None | Angle-based |
+| High-latitude rule (twilight never reaches the angle) | Angle-based, 1/7 of night, Middle of night, Nearest location, None (+ proposed: Nearest day) | Angle-based — **proposed change to Nearest location, awaiting user (D-F6)** |
+| Polar day / night fallback | Nearest location (aqrab al-bilad, dynamic), Fixed latitude 48.5° | **Nearest location** |
 | Altitude horizon dip | Apply dip to Sunrise/Maghrib (default on); also to Fajr/Isha (off) | on / off |
 | Per-prayer offsets (ihtiyat) | ± minutes each | 0 |
 
@@ -151,27 +152,99 @@ and save normalised JSON fixtures in `tests/fixtures/tracks/` with source
 attribution. The regression suite replays those real tracks through the
 in-flight engine and compares against the great-circle model.
 
-## 9. Decisions & action log
+## 9. Decision record
 
-| # | Decision / action | Why |
+Every decision made so far, grouped by area. **D-** = decided, **P-** = pending
+the user. "User" = the user asked for it; "Lead" = engineering judgement by the
+lead; "Agent" = choice made inside a module by a sub-agent and accepted by the lead.
+
+### 9.1 Product scope
+| ID | Decision | Source |
 |---|---|---|
-| 1 | Defaults: **Hanafi** Asr (factor 2), **Karachi 18°/18°**, angle-based high-latitude rule, horizon dip on for sunrise/maghrib | User request |
-| 2 | Event model = per-minute aircraft position → per-location prayer times → window transitions refined by bisection to ~1 s | User request ("where the plane is every minute") |
-| 3 | Stack: Vite + TypeScript, no framework; Leaflet; Tesseract.js; `tz-lookup` (CC0); OurAirports (public domain); MIT licence | Fully client-side, open source |
-| 4 | Repo `usmanghani/inflight-prayer-times` (personal account, unrelated to heraclescorp); built in a separate local git repo, **not** in the connected `docs` repo | User request |
-| 5 | Repo creation from the session was refused (403); user created the empty repo. Push still refused (`push_denied`): the GitHub account connected to Claude lacks write access → fix: connect the `usmanghani` account at claude.ai/connect-github (or add the connected account as a Write collaborator) and install the Claude GitHub App on the repo | Session GitHub scope |
-| 6 | Production online data via a small **Cloudflare Worker** (Vercel adapter included) holding secrets; app still works without it | User request |
-| 7 | **Regression tooling** that imports real flights from online databases into test fixtures | User request |
-| 8 | LLM for itinerary/route parsing = **OpenRouter `deepseek/deepseek-v4.1-flash`** (verified live: text+image, structured outputs, $0.30/M in, $1.20/M out); Claude `claude-opus-5-5` / OpenAI optional fallbacks; per-request model limited to an allow-list; text path (OCR/pasted text) to cut cost | User request: cheaper than frontier models |
-| 9 | Source probe (2026-10-12): adsbdb ✅ free; adsb.lol ✅ free (current-day traces); OpenSky live ✅ / historical ❌ without account; FlightAware AeroAPI & AeroDataBox need keys | Determines what fixtures can be fetched now |
-| 10 | Reference-value correction: the lead's brief gave Karachi 2026-03-21 values ≈4 min late (Fajr 05:23, Sunrise 06:38, Dhuhr 12:43, Asr 16:59/16:10, Maghrib 18:48, Isha 20:03). Agent A and an independent lead check (transit 12:39 PKT, EoT −7.2 min) agree on **05:19 / 06:35 / 12:39 / 17:01 (Hanafi) · 16:06 (Shafi'i) / 18:43 / 19:59**; tests use the verified values | Accuracy |
-| 11 | Also corrected in Agent B's tests: KHI→SFO great-circle 12,991 km (brief said ~13,2xx), KHI→DXB initial bearing 274.4° (brief said 260–270°) | Accuracy |
+| D-P1 | Fully client-side, open-source (MIT) web app for in-flight prayer times; multi-leg itineraries incl. layovers | User |
+| D-P2 | Itinerary input by photo (on-device OCR), pasted text, manual legs editor, sample routes, imported real track | User + Lead |
+| D-P3 | Route library of **real flights** covering US East & West Coast ↔ Asia, South Asia/Karachi, Middle East, Europe, North & South Africa (+ East/West), South America, Australia, New Zealand, polar — **both directions** for every pair | User |
+| D-P4 | Extras: Qibla absolute & relative to aircraft nose, makrooh times, qasr/jam' notes per madhab, times in UTC/origin/destination/under-aircraft tz, CSV + ICS export, share link, PWA offline, dark mode | Lead |
 
-| 12 | **No vulnerable dependencies, including dev tooling.** Vitest 3 → 5.0.3 in root and `worker/` (removes tinypool GHSA-5gmw-xhrv-c9v3 / GHSA-85c8-ppgw-ccpr); `npm audit` = 0 in both; CI runs `npm audit --audit-level=low` and fails on any finding | User request |
-| 13 | Engine verdict on "repeated window" anomalies: real consequences of the definitions (high-latitude rules on summer routes; near-polar great circles where solar time runs backwards). Polar day/night fallback options were nearest latitude 48.5° vs departure city vs Makkah | Fiqh choice belongs to the user |
-| 14 | **User decision: nearest location (aqrab al-bilad)** for polar day/night — implemented dynamically: nearest latitude on the same meridian (same observer elevation) where that date has sunrise & sunset; Fajr/Isha from there or via the high-latitude rule; Dhuhr stays at local transit. New setting `polarFallback: 'nearestLocation' (default) \| 'fixedLatitude'` (legacy 48.5°); UI badge shows borrowed times | User request |
+### 9.2 Fiqh & calculation settings
+| ID | Decision | Source |
+|---|---|---|
+| D-F1 | Default madhab **Hanafi** (Asr shadow factor 2); Shafi'i, Maliki, Hanbali (factor 1) and Ja'fari supported | User |
+| D-F2 | Default angles **Fajr 18°, Isha 18°** (Karachi / University of Islamic Sciences). Basis: Isha after disappearance of the *white* twilight (shafaq abyad, Imam Abu Hanifa); the Sahibayn's red-twilight view (≈15–17°) is available via other presets/custom | User + Lead |
+| D-F3 | Custom Fajr/Isha angles allowed (validated finite, 0–30°); Isha-by-interval (Umm al-Qura 90 min), Maghrib angle (Ja'fari 4°, Tehran 4.5°), Ja'fari midnight, per-prayer offsets ±120 min | User + Lead |
+| D-F4 | 17 presets: Karachi, MWL, ISNA, Egypt, Umm al-Qura, Gulf, Kuwait, Qatar, Singapore, JAKIM, Diyanet, Tehran, Ja'fari, France, Russia, Dubai, Custom | Lead |
+| D-F5 | **Polar day/night fallback = nearest location (aqrab al-bilad)**, computed dynamically: nearest latitude on the same meridian, same observer elevation, where that date has sunrise & sunset; Fajr/Isha there or via the high-latitude rule; Dhuhr stays at the real local transit. Legacy fixed ±48.5° kept as option `polarFallback: 'fixedLatitude'`. Borrowed times carry a UI badge | User |
+| D-F6 | South Asian Hanafi position when 18° twilight never occurs (persistent twilight, ≈48.5°+ in summer): Isha remains obligatory and its time is **estimated** (taqdir) — the later, stronger view (Ibn al-Humam, *Fath al-Qadir*; discussed by Ibn Abidin) over al-Baqqali's view that it lapses. Estimation methods used by South Asian Hanafi muftis: nearest day (aqrab al-ayyam — reportedly most common in UK Deobandi timetables, not verified as majority), nearest location (aqrab al-bilad), one-seventh of the night. Angle-based is a modern astronomical convention, not a classical fiqh method. The app states this is ijtihad and the traveller should follow their mufti | Lead research (not a fatwa) |
+| D-F7 | Traveller notes: Hanafi — qasr is wajib for a musafir, no combining (jam') except Arafah/Muzdalifah; Shafi'i/Maliki/Hanbali/Ja'fari — jam' permitted | Lead (agent wording, not independently re-verified) |
+| P-F1 | **Pending:** switch the default high-latitude rule from angle-based to **nearest location** (one consistent classical method), and add a **nearest-day** option (nearest date on which 18° occurs at the aircraft's current position) | Lead recommendation, awaiting user |
 
-### Waiting on the user
-* GitHub push access (item 5).
-* API keys when deploying the Worker: `OPENROUTER_API_KEY` (required for AI parsing); optional `OPENSKY_CLIENT_ID`/`SECRET` (free account, historical tracks), `FLIGHTAWARE_API_KEY`, `AERODATABOX_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
-* An actual itinerary photo to test the end-to-end flow (none attached yet).
+### 9.3 Algorithm & numerics
+| ID | Decision | Source |
+|---|---|---|
+| D-A1 | Core model: every minute → aircraft position → prayer times for that exact place & local solar date → active window; window changes refined by bisection to ~1 s | User + Lead |
+| D-A2 | Window = opened by the last event ≤ t, using times for solar dates d−1, d, d+1 at that place. Windows: fajr, sunrise (no fard), dhuhr, asr, maghrib, isha | Lead |
+| D-A3 | Solar position: NOAA/Meeus low-precision (~0.01°); prayer times iterated at the actual event time | Agent |
+| D-A4 | Horizon dip `0.0347·√h` (h metres, clamped ≥ 0; ≈3.64° at 11 km). Applied to sunrise/maghrib by default; optional for Fajr/Isha (default off) | User (altitude) + Lead |
+| D-A5 | Numeric guards: clamp acos/asin arguments and treat out-of-range as "event does not occur"; poles (cos φ≈0) handled; longitude normalised; NaN/∞ input → all-null `noEvent`, never NaN/Invalid Date; elevation clamped 0–100 km | User (negatives / zero division) |
+| D-A6 | Anomalies reported, not hidden: `windowRepeated` (sun "re-rises" — flying west faster than the sun, or crossing meridians fast near the pole), `windowSkipped` (short windows found by recursive 8-way subdivision), `polarDay`/`polarNight`, `highLatitudeRuleUsed` | Lead |
+| D-A7 | Verdict on the many "repeated window" anomalies in the route matrix: real consequences of the definitions (high-latitude rules on summer routes; near-polar great circles, e.g. DOH→SFO ≈85°N, where solar time runs backwards). Anomaly message wording to be made case-specific (not always "flying west faster than the sun") | Lead |
+| D-A8 | Engine calls the exact `windowAt` per sample and per bisection step (no rounded-position memo); sample count capped at 12,000; 17 h flight ≈ 0.1–0.2 s | Agent |
+| D-A9 | Isha portions measured from max(sunset, maghrib) so angle-based Maghrib methods never yield Isha ≤ Maghrib; unreachable Maghrib angle falls back to sunset | Agent |
+| D-A10 | Asr = null (`noEvent`) when noon altitude ≤ 0 or the sun stays above the Asr altitude | Agent |
+
+### 9.4 Flight path & time
+| ID | Decision | Source |
+|---|---|---|
+| D-R1 | Route = great circle (slerp; safe for zero-length, antipodal, antimeridian) through optional waypoints; an imported real track overrides | Lead |
+| D-R2 | Flight profile defaults: taxi-out 15 min, climb 22, descent 28, taxi-in 8, cruise 11,000 m, climb/descent at 0.6× cruise speed; phases scaled on short flights (cruise `min(cruise, 3000 + 25 m/min)` only when scaled — known altitude step at ≈73 min block, open item) | Agent |
+| D-R3 | Layovers: aircraft on the ground at the connecting airport (airport elevation); taxi phases on ground | Lead |
+| D-R4 | Timed imported tracks interpolate by time; if the track's clock doesn't overlap the scheduled leg it is shifted to scheduled departure; untimed tracks use the profile timing | Agent |
+| D-R5 | Time zones: IANA via Intl; DST-correct local→UTC (spring-forward gap shifts forward, ambiguous → earlier); tz under aircraft via `tz-lookup`, fallback nautical `Etc/GMT±N`; zone-less CSV timestamps read as UTC | Agent |
+| D-R6 | Validation: errors for unknown airport, arrival ≤ departure, overlapping legs, block > 22 h; warnings for connection mismatch, same airport, layover > 48 h, implied speed > 1100 or < 250 km/h | Lead + Agent |
+
+### 9.5 Data
+| ID | Decision | Source |
+|---|---|---|
+| D-D1 | Airports: OurAirports (public domain), large/medium + any with scheduled service and IATA; tz via `tz-lookup` at build time → 5,403 airports, 527 KB JSON | Lead + Agent |
+| D-D2 | Flight library: 223 flights, 14 sample itineraries; schedules **representative** (anchored to the October timetable; other DST periods may shift block time ≈1 h). Lower-confidence flight numbers listed in `flights.ts`; no LHR–KHI flight used (SFO→LHR→DXB→KHI instead) | Agent |
+| D-D3 | Library is verified against adsbdb.com routes by `scripts/fixtures/verify-library.ts`; mismatches get fixed in `flights.ts` (e.g. suspected LH400/LH401 direction swap) | Lead |
+| D-D4 | Itinerary parser: DD/MM for ambiguous numeric dates; IATA codes accepted only in context and only if known; stop-words (THE, AND, CAN, …) never airports; "+1" markers; missing year inferred from weekday + reference date | Agent |
+
+### 9.6 Online data, backend & AI
+| ID | Decision | Source |
+|---|---|---|
+| D-B1 | Secrets only in a small stateless **Cloudflare Worker** (Vercel Edge adapter included); the static app works without it | User |
+| D-B2 | Flight lookup order: AeroDataBox → FlightAware AeroAPI → adsbdb (free). Track order: FlightAware → OpenSky (OAuth client credentials) → adsb.lol (free, current day only) | Lead |
+| D-B3 | **LLM for itinerary/route parsing: OpenRouter `deepseek/deepseek-v4.1-flash`** (verified live: text+image, structured outputs, $0.30/M in, $1.20/M out); fallbacks Claude `claude-opus-5-5` (with server-side refusal fallbacks) and OpenAI (`OPENAI_MODEL`, default `gpt-5-mini` — unverified guess, configurable). Per-request model only from `OPENROUTER_ALLOWED_MODELS` | User |
+| D-B4 | Cheaper text path: send OCR'd/pasted text instead of the image; `/api/route/parse` for free-text routes / flight-plan strings; never invent coordinates | User + Lead |
+| D-B5 | Hardening: exact-match CORS allow-list; rate limits 60/min general, 8/min extract (Workers Rate Limiting, fail-open if absent); caches 6 h flight / 1 h track; 8 MB decoded upload limit, 50k-char text limit, magic-byte check vs media type; images downscaled in browser to ≤ 1568 px; no logging of bodies/images; model output schema-validated in the worker and re-validated in the browser | Lead + Agent |
+| D-B6 | AI reading is opt-in in the UI with a clear "image is sent to the server" notice; on-device Tesseract is the default; parsed legs always go to the editor for confirmation | Lead |
+
+### 9.7 Regression & quality
+| ID | Decision | Source |
+|---|---|---|
+| D-Q1 | Regression tooling imports real flights from online databases into `tests/fixtures/` (adsbdb verification, adsb.lol traces; OpenSky/FlightAware when credentials exist); real tracks replayed vs the great-circle model | User |
+| D-Q2 | Route matrix: every library flight × 4 dates (equinoxes/solstices) × settings variants + all itineraries; asserts no NaN, chronological events in range. Default settings at 2-min step, other variants at 6-min (runtime) | Lead + Agent |
+| D-Q3 | **No vulnerable dependencies, including dev tooling.** Vitest 3 → 5.0.3 (root + worker) removed tinypool (GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr); `npm audit` = 0; CI fails on any audit finding (`--audit-level=low`); agents must keep new deps audit-clean | User |
+| D-Q4 | Reference values must be independently verified, never tuned to. Corrections made: Karachi 2026-03-21 = 05:19 / 06:35 / 12:39 / 17:01 (Hanafi) · 16:06 (Shafi'i) / 18:43 / 19:59 PKT (the lead's brief was ≈4 min late); KHI→SFO 12,991 km; KHI→DXB bearing 274.4° | Lead |
+| D-Q5 | CI (GitHub Actions): audit, typecheck, tests, build, worker tests, deploy to GitHub Pages | Lead |
+
+### 9.8 Repository & process
+| ID | Decision | Source |
+|---|---|---|
+| D-G1 | Repo `usmanghani/inflight-prayer-times` (personal account, not heraclescorp); built in a separate local repo, not the connected `docs` repo | User |
+| D-G2 | Session couldn't create repos (403); user created it. Push refused (`push_denied`): the GitHub account connected to Claude lacks write access → connect the `usmanghani` account at claude.ai/connect-github (or add the connected account as a Write collaborator) and install the Claude GitHub App on the repo | — |
+| D-G3 | Built by parallel Sonnet sub-agents with disjoint file ownership and a shared `types.ts` contract; lead reviews, verifies and commits | User |
+| D-G4 | `types.ts` additions so far: optional `polarFallback` on PrayerSettings and `borrowedLatitude` on StaticPrayerTimes (non-breaking) | Lead |
+
+### 9.9 Pending — needs the user
+* **P-F1** — high-latitude default → nearest location, and add nearest-day option (see D-F6).
+* GitHub push access (D-G2).
+* API keys when deploying the Worker: `OPENROUTER_API_KEY` (required for AI parsing); optional `OPENSKY_CLIENT_ID`/`OPENSKY_CLIENT_SECRET` (free account; historical tracks), `FLIGHTAWARE_API_KEY`, `AERODATABOX_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
+* An actual itinerary photo for an end-to-end test.
+
+### 9.10 Open engineering items (lead)
+* Case-specific anomaly messages (D-A7).
+* Continuous cruise-altitude cap for short flights (D-R2).
+* Apply library fixes from adsbdb verification (D-D3).
+* Verify live upstream response shapes (AeroDataBox, AeroAPI, OpenSky, adsb.lol, OpenRouter PDF plugin) once keys exist — current worker fixtures are written from documentation.
