@@ -106,9 +106,9 @@ tests/                     vitest unit + route-matrix regression
 | 3 | Flight & journey: `geo/geodesy.ts`, `flight/*`, `time/tz.ts` | Agent B | ✅ done, 118 tests |
 | 4 | Data & OCR: 5,403 airports, 223-flight library (both directions), 14 sample itineraries, Tesseract OCR + itinerary parser | Agent C | ✅ done, 55 tests |
 | 5 | In-flight engine `prayer/inflight.ts`, `prayer/summary.ts`, route-matrix regression, `docs/ALGORITHM.md` | Agent D | 🔄 in progress |
-| 6 | Edge proxy `worker/` (Cloudflare + Vercel adapter), `src/api/` client, `docs/BACKEND.md` | Agent F | 🔄 in progress |
+| 6 | Edge proxy `worker/` (Cloudflare + Vercel adapter), `src/api/` client, `docs/BACKEND.md`; OpenRouter DeepSeek default | Agent F | ✅ done, 58 worker + 13 client tests |
 | 7 | Regression fixture tooling `scripts/fixtures/` + real-track fixtures + library verification vs adsbdb | Agent G | 🔄 in progress |
-| 8 | UI: form, settings, Leaflet map, timeline, table, CSV/ICS, PWA, dark mode | Agent E | ⏳ after C, D, F |
+| 8 | UI: form, settings, Leaflet map, timeline, sun chart, table, CSV/ICS, PWA, dark mode, share links, Web Worker | Agent E | 🔄 in progress |
 | 9 | Integration review, README, push to GitHub, enable Pages | lead | ⏳ blocked on GitHub push access |
 
 ## 7. Extras beyond the brief
@@ -171,3 +171,4 @@ in-flight engine and compares against the great-circle model.
 * GitHub push access (item 5).
 * API keys when deploying the Worker: `OPENROUTER_API_KEY` (required for AI parsing); optional `OPENSKY_CLIENT_ID`/`SECRET` (free account, historical tracks), `FLIGHTAWARE_API_KEY`, `AERODATABOX_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
 * An actual itinerary photo to test the end-to-end flow (none attached yet).
+* Follow-up (lead): upgrade Vitest to v5 in root and `worker/` once agents finish — `npm audit` flags tinypool (dev-only test runner, not shipped; production deps have 0 vulnerabilities).
