@@ -168,7 +168,8 @@ in-flight engine and compares against the great-circle model.
 | 11 | Also corrected in Agent B's tests: KHI→SFO great-circle 12,991 km (brief said ~13,2xx), KHI→DXB initial bearing 274.4° (brief said 260–270°) | Accuracy |
 
 | 12 | **No vulnerable dependencies, including dev tooling.** Vitest 3 → 5.0.3 in root and `worker/` (removes tinypool GHSA-5gmw-xhrv-c9v3 / GHSA-85c8-ppgw-ccpr); `npm audit` = 0 in both; CI runs `npm audit --audit-level=low` and fails on any finding | User request |
-| 13 | Engine verdict on "repeated window" anomalies: real consequences of the definitions (high-latitude rules on summer routes; near-polar great circles where solar time runs backwards). Open question for the user: polar day/night fallback — nearest latitude 48.5° (current) vs departure city vs Makkah | Fiqh choice belongs to the user |
+| 13 | Engine verdict on "repeated window" anomalies: real consequences of the definitions (high-latitude rules on summer routes; near-polar great circles where solar time runs backwards). Polar day/night fallback options were nearest latitude 48.5° vs departure city vs Makkah | Fiqh choice belongs to the user |
+| 14 | **User decision: nearest location (aqrab al-bilad)** for polar day/night — implemented dynamically: nearest latitude on the same meridian (same observer elevation) where that date has sunrise & sunset; Fajr/Isha from there or via the high-latitude rule; Dhuhr stays at local transit. New setting `polarFallback: 'nearestLocation' (default) \| 'fixedLatitude'` (legacy 48.5°); UI badge shows borrowed times | User request |
 
 ### Waiting on the user
 * GitHub push access (item 5).
