@@ -97,21 +97,19 @@ src/
 tests/                     vitest unit + route-matrix regression
 ```
 
-## 6. Build steps (parallel sub-agents)
+## 6. Build steps (parallel sub-agents, Sonnet)
 
-1. **Scaffold + contracts** (lead): Vite/TS/Vitest, `types.ts`.
-2. **Agent A — astronomy & prayer engine**: `astro/`, `prayer/methods.ts`,
-   `prayer/static.ts`, `geo/qibla.ts` + tests vs. reference values & edge cases.
-3. **Agent B — flight & journey**: `geo/geodesy.ts`, `flight/*`, `time/tz.ts`
-   + tests (dateline, zero-length, layovers, polar).
-4. **Agent C — data & OCR**: airport DB build script, real flight library,
-   OCR + itinerary parser + tests.
-5. **Agent D — in-flight engine** (after A+B): `prayer/inflight.ts` + route
-   matrix regression over the whole flight library.
-6. **Agent E — UI** (after all): responsive UI, Leaflet map with track &
-   prayer markers, timeline, table, CSV/ICS export, settings persistence,
-   dark mode, PWA offline.
-7. **Lead — integration review**, GitHub Actions (test + Pages deploy), README.
+| # | Work | Owner | Status |
+|---|---|---|---|
+| 1 | Scaffold (Vite/TS/Vitest), `types.ts` contracts, CI + Pages workflow, MIT licence | lead | ✅ done |
+| 2 | Astronomy & prayer engine: `astro/`, `prayer/methods.ts`, `prayer/static.ts`, `geo/qibla.ts` | Agent A | ✅ done, 101 tests |
+| 3 | Flight & journey: `geo/geodesy.ts`, `flight/*`, `time/tz.ts` | Agent B | ✅ done, 118 tests |
+| 4 | Data & OCR: airport DB build, real flight library, Tesseract OCR + itinerary parser | Agent C | 🔄 in progress |
+| 5 | In-flight engine `prayer/inflight.ts`, `prayer/summary.ts`, route-matrix regression, `docs/ALGORITHM.md` | Agent D | 🔄 in progress |
+| 6 | Edge proxy `worker/` (Cloudflare + Vercel adapter), `src/api/` client, `docs/BACKEND.md` | Agent F | 🔄 in progress |
+| 7 | Regression fixture tooling `scripts/fixtures/` + real-track fixtures | Agent G | ⏳ after Agent C |
+| 8 | UI: form, settings, Leaflet map, timeline, table, CSV/ICS, PWA, dark mode | Agent E | ⏳ after C, D, F |
+| 9 | Integration review, README, push to GitHub, enable Pages | lead | ⏳ blocked on GitHub push access |
 
 ## 7. Extras beyond the brief
 
@@ -152,3 +150,24 @@ when credentials are in env) for every flight in the library, both directions,
 and save normalised JSON fixtures in `tests/fixtures/tracks/` with source
 attribution. The regression suite replays those real tracks through the
 in-flight engine and compares against the great-circle model.
+
+## 9. Decisions & action log
+
+| # | Decision / action | Why |
+|---|---|---|
+| 1 | Defaults: **Hanafi** Asr (factor 2), **Karachi 18°/18°**, angle-based high-latitude rule, horizon dip on for sunrise/maghrib | User request |
+| 2 | Event model = per-minute aircraft position → per-location prayer times → window transitions refined by bisection to ~1 s | User request ("where the plane is every minute") |
+| 3 | Stack: Vite + TypeScript, no framework; Leaflet; Tesseract.js; `tz-lookup` (CC0); OurAirports (public domain); MIT licence | Fully client-side, open source |
+| 4 | Repo `usmanghani/inflight-prayer-times` (personal account, unrelated to heraclescorp); built in a separate local git repo, **not** in the connected `docs` repo | User request |
+| 5 | Repo creation from the session was refused (403); user created the empty repo. Push still refused (`push_denied`): the GitHub account connected to Claude lacks write access → fix: connect the `usmanghani` account at claude.ai/connect-github (or add the connected account as a Write collaborator) and install the Claude GitHub App on the repo | Session GitHub scope |
+| 6 | Production online data via a small **Cloudflare Worker** (Vercel adapter included) holding secrets; app still works without it | User request |
+| 7 | **Regression tooling** that imports real flights from online databases into test fixtures | User request |
+| 8 | LLM for itinerary/route parsing = **OpenRouter `deepseek/deepseek-v4.1-flash`** (verified live: text+image, structured outputs, $0.30/M in, $1.20/M out); Claude `claude-opus-5-5` / OpenAI optional fallbacks; per-request model limited to an allow-list; text path (OCR/pasted text) to cut cost | User request: cheaper than frontier models |
+| 9 | Source probe (2026-10-12): adsbdb ✅ free; adsb.lol ✅ free (current-day traces); OpenSky live ✅ / historical ❌ without account; FlightAware AeroAPI & AeroDataBox need keys | Determines what fixtures can be fetched now |
+| 10 | Reference-value correction: the lead's brief gave Karachi 2026-03-21 values ≈4 min late (Fajr 05:23, Sunrise 06:38, Dhuhr 12:43, Asr 16:59/16:10, Maghrib 18:48, Isha 20:03). Agent A and an independent lead check (transit 12:39 PKT, EoT −7.2 min) agree on **05:19 / 06:35 / 12:39 / 17:01 (Hanafi) · 16:06 (Shafi'i) / 18:43 / 19:59**; tests use the verified values | Accuracy |
+| 11 | Also corrected in Agent B's tests: KHI→SFO great-circle 12,991 km (brief said ~13,2xx), KHI→DXB initial bearing 274.4° (brief said 260–270°) | Accuracy |
+
+### Waiting on the user
+* GitHub push access (item 5).
+* API keys when deploying the Worker: `OPENROUTER_API_KEY` (required for AI parsing); optional `OPENSKY_CLIENT_ID`/`SECRET` (free account, historical tracks), `FLIGHTAWARE_API_KEY`, `AERODATABOX_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
+* An actual itinerary photo to test the end-to-end flow (none attached yet).
