@@ -7,6 +7,7 @@ import type {
   MidnightMode,
   PrayerOffsets,
   PrayerSettings,
+  ProfileId,
 } from '../types';
 
 /** Build a preset. Isha is by angle unless `isha` is a `{ interval }`. */
@@ -56,16 +57,86 @@ export const METHODS: Record<MethodId, CalculationMethod> = {
   custom: preset('custom', 'Custom', 18, 18),
 };
 
-/** Default settings: Hanafi Asr, Karachi 18°/18°, angle-based high-latitude rule, dip on for sunrise/sunset. */
-export const DEFAULT_SETTINGS: PrayerSettings = {
-  madhab: 'hanafi',
-  method: { ...METHODS.karachi },
-  highLatitudeRule: 'angleBased',
-  dipForSunriseSunset: true,
-  dipForTwilight: false,
-  offsets: { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 },
-  polarFallback: 'nearestLocation',
+/** Red-twilight (shafaq ahmar) depression used by rule 'redTwilight': the Sahibayn's Isha, ≈12°. */
+export const DEFAULT_RED_TWILIGHT_ANGLE = 12;
+
+/** Offsets are all zero except where a profile says otherwise. */
+const zeroOffsets = (): PrayerOffsets => ({ fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 });
+
+export interface ProfileInfo {
+  id: Exclude<ProfileId, 'custom'>;
+  label: string;
+  description: string;
+  sources: { title: string; url: string }[];
+  settings: PrayerSettings;
+}
+
+/**
+ * Named bundles of settings that follow a published opinion. Both are Hanafi with Karachi 18°/18°;
+ * they differ in what happens at latitudes where the 18° twilight does not occur.
+ */
+export const PROFILES: Record<'barelvi' | 'deobandi', ProfileInfo> = {
+  barelvi: {
+    id: 'barelvi',
+    label: 'Barelvi (Ahl-e-Sunnat)',
+    description:
+      'Hanafi, Karachi 18°/18°, Maghrib 3 minutes after sunset (ihtiyat). Where the white twilight (18°) never ' +
+      'disappears, Isha is not waived: out of necessity follow the Sahibayn (Abu Yusuf and Muhammad) and pray Isha ' +
+      'after the red twilight (≈12°) as ada, returning to Imam Abu Hanifa\u2019s 18° whenever it occurs again. ' +
+      'Fajr, if its angle is not reached, is taken from the nearest location where it is. Where the Sun does not ' +
+      'rise/set, the times of the nearest location with a normal day are used.',
+    sources: [
+      { title: 'Fatawa Razaviyya / FatwaQA: Isha time on bright nights (Urdu)', url: 'https://www.fatwaqa.com/ur/fatawa/namaz/bright-night-mein-isha-ka-waqt' },
+      { title: 'Al-Jamiatul Ashrafia: ruling on Isha when twilight does not disappear', url: 'https://www.aljamiatulashrafia.in/answer.php?qid=1401&cat=9484635342544&uit=1983642563487650970&lang=EN' },
+      { title: 'Dawat-e-Islami prayer times (United Kingdom)', url: 'https://www.dawateislami.net/prayer-times/world/united-kingdom' },
+    ],
+    settings: {
+      madhab: 'hanafi',
+      method: { ...METHODS.karachi },
+      highLatitudeRule: 'redTwilight',
+      redTwilightAngle: DEFAULT_RED_TWILIGHT_ANGLE,
+      fajrFallback: 'nearestLocation',
+      polarFallback: 'nearestLocation',
+      dipForSunriseSunset: true,
+      dipForTwilight: false,
+      offsets: { ...zeroOffsets(), maghrib: 3 },
+      profile: 'barelvi',
+    },
+  },
+  deobandi: {
+    id: 'deobandi',
+    label: 'Deobandi',
+    description:
+      'Hanafi, Karachi 18°/18°, no offsets. Where the 18° twilight does not occur, Fajr and Isha follow the nearest ' +
+      'location (aqrab al-bilad) where it does, computed dynamically for the date and longitude; likewise when the ' +
+      'Sun does not rise or set.',
+    sources: [
+      { title: 'Wifaq ul Ulama UK: high-latitude timetable guidance', url: 'https://www.wifaqululama.co.uk/highlat/' },
+      { title: 'AskImam: Fajr and Isha times in extreme latitudes', url: 'https://www.askimam.org/public/question_detail/15287' },
+    ],
+    settings: {
+      madhab: 'hanafi',
+      method: { ...METHODS.karachi },
+      highLatitudeRule: 'nearestLatitude',
+      redTwilightAngle: DEFAULT_RED_TWILIGHT_ANGLE,
+      fajrFallback: 'nearestLocation',
+      polarFallback: 'nearestLocation',
+      dipForSunriseSunset: true,
+      dipForTwilight: false,
+      offsets: zeroOffsets(),
+      profile: 'deobandi',
+    },
+  },
 };
+
+/** A fresh (deep-copied) settings object for a named profile. */
+export function applyProfile(id: 'barelvi' | 'deobandi'): PrayerSettings {
+  const p = (PROFILES[id] ?? PROFILES.barelvi).settings;
+  return { ...p, method: { ...p.method }, offsets: { ...p.offsets } };
+}
+
+/** Default settings = the Barelvi (Ahl-e-Sunnat) profile. */
+export const DEFAULT_SETTINGS: PrayerSettings = applyProfile('barelvi');
 
 /** Asr shadow multiple: Hanafi = 2 (shadow = twice the object + noon shadow), all others = 1. */
 export function asrShadowFactor(m: Madhab): 1 | 2 {
@@ -142,8 +213,11 @@ const RULES: readonly HighLatitudeRule[] = [
   'oneSeventh',
   'middleOfNight',
   'nearestLatitude',
+  'redTwilight',
   'none',
 ];
+const FAJR_FALLBACKS: readonly NonNullable<PrayerSettings['fajrFallback']>[] = ['nearestLocation', 'redTwilight'];
+const PROFILE_IDS: readonly ProfileId[] = ['barelvi', 'deobandi', 'custom'];
 const POLAR_FALLBACKS: readonly NonNullable<PrayerSettings['polarFallback']>[] = ['nearestLocation', 'fixedLatitude'];
 const OFFSET_KEYS: readonly (keyof PrayerOffsets)[] = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
@@ -166,7 +240,21 @@ export function validateSettings(s: PrayerSettings): string[] {
     errors.push(`Unknown polar fallback "${String(s.polarFallback)}".`);
   }
 
+  if (s.fajrFallback !== undefined && !FAJR_FALLBACKS.includes(s.fajrFallback)) {
+    errors.push(`Unknown Fajr fallback "${String(s.fajrFallback)}".`);
+  }
+  if (s.profile !== undefined && !PROFILE_IDS.includes(s.profile)) {
+    errors.push(`Unknown profile "${String(s.profile)}".`);
+  }
+
   const m = s.method;
+  if (s.redTwilightAngle !== undefined) {
+    if (!inRange(s.redTwilightAngle, 0, 30)) {
+      errors.push('The red-twilight angle must be a number between 0\u00b0 and 30\u00b0.');
+    } else if (m && typeof m === 'object' && typeof m.ishaAngle === 'number' && s.redTwilightAngle > m.ishaAngle) {
+      errors.push('The red-twilight angle must not exceed the Isha angle (it is the shallower fallback twilight).');
+    }
+  }
   if (!m || typeof m !== 'object') {
     errors.push('Calculation method is missing.');
   } else {

@@ -91,8 +91,8 @@ from the window.
   19.5°/17.5°, Tehran 17.7°/14°, Ja'fari/Leva 16°/14° …). You may enter any angle from 0° to 30°.
 * **Isha: white or red twilight (shafaq abyad / shafaq ahmar).** Hanafi (Imam Abu Hanifa's position) starts Isha
   when the *white* twilight disappears; the majority starts it with the disappearance of the *red* glow, which is
-  earlier. The engine does not model the colour of twilight; it uses the angle you choose. A larger Isha angle
-  approximates the later white-twilight reading. Karachi 18° is the usual Hanafi practice in South Asia.
+  earlier. The engine does not model the colour of twilight; it uses angles: Karachi 18° is the usual Hanafi reading of the
+  white twilight, and the default profile uses ≈12° for the red twilight only where 18° never occurs (see Profiles).
 * **Isha by interval.** Umm al-Qura, Gulf and Qatar set Isha a fixed number of minutes after Maghrib (90 min).
   This is reported as `note: 'interval'`.
 * **Ja'fari.** Maghrib is when the redness in the eastern sky disappears, approximated by a Sun angle of 4°
@@ -102,6 +102,38 @@ from the window.
   windows themselves end at Fajr.
 * **Travel concessions.** Shortening (qasr) and combining (jam') depend on the madhab and are *not* applied to the
   windows; the summary only displays the plain windows. See `MADHAB_INFO` for notes.
+
+### Profiles
+
+The app ships two named bundles of settings (`PROFILES` in `src/prayer/methods.ts`, applied with `applyProfile`).
+Both are Hanafi with the Karachi 18°/18° angles and the Hanafi Asr; they differ in what happens where 18° twilight
+does not occur. **`DEFAULT_SETTINGS` is the Barelvi profile.** The `profile` field of the settings is informational
+(for the UI); every other setting can still be changed individually.
+
+| | **Barelvi (Ahl-e-Sunnat), default** | **Deobandi** |
+|---|---|---|
+| Madhab, method | Hanafi, Karachi 18°/18° | Hanafi, Karachi 18°/18° |
+| Maghrib | sunset **+ 3 minutes** (ihtiyat, as in the Dawat-e-Islami timetables) | sunset |
+| Where Isha's 18° is not reached | **Isha at the red twilight (≈12°)**, prayed as *ada* | Isha borrowed from the nearest location where 18° is reached |
+| Where Fajr's 18° is not reached | Fajr borrowed from the nearest location where 18° is reached (`fajrFallback: 'nearestLocation'`) | same |
+| Polar day / night | nearest location with a normal day | nearest location with a normal day |
+| High-latitude rule | `redTwilight`, `redTwilightAngle: 12` | `nearestLatitude` |
+
+*Fiqh basis (Barelvi).* In the Hanafi school Imam Abu Hanifa places the start of Isha at the disappearance of the
+white twilight (shafaq abyad, ≈18°); his two students, Abu Yusuf and Muhammad (the *Sahibayn*), at the disappearance of the red twilight
+(shafaq ahmar, ≈12° on the usual reckoning). Where the white twilight never disappears (summer nights at high
+latitudes) Isha is not waived: out of necessity the ruling of the Sahibayn is followed, Isha is prayed after the red twilight as *ada*,
+and the Imam's 18° applies again as soon as it occurs. This is the position of the Darul Ifta Ahlesunnat (Dawat-e-Islami)
+fatwa FAM-1200 (Mufti Muhammad Qasim Attari, 16 May 2026). Dawat-e-Islami's London timetable back-solves to Fajr 18.2°, Isha (Hanafi) 18.0° and
+Maghrib about 3 minutes after sunset, which the profile reproduces. Fajr has no shallower twilight to fall back on in
+this fatwa, so the engine borrows the 18° Fajr of the nearest place where it occurs (optionally `fajrFallback:
+'redTwilight'` applies 12° to Fajr too). *Deobandi:* the nearest-location (*aqrab al-bilad*) approach for both Fajr and Isha.
+
+Sources: Barelvi: [fatwaqa.com](https://www.fatwaqa.com/ur/fatawa/namaz/bright-night-mein-isha-ka-waqt),
+[Al-Jamiatul Ashrafia](https://www.aljamiatulashrafia.in/answer.php?qid=1401&cat=9484635342544&uit=1983642563487650970&lang=EN),
+[Dawat-e-Islami UK timetable](https://www.dawateislami.net/prayer-times/world/united-kingdom). Deobandi:
+[Wifaq ul Ulama UK](https://www.wifaqululama.co.uk/highlat/), [AskImam 15287](https://www.askimam.org/public/question_detail/15287).
+The app presents these as published opinions, not rulings; consult your scholar.
 
 ## 5. High-latitude rules
 
@@ -113,12 +145,14 @@ Isha, and in the extreme Sunrise and Maghrib, cannot be found from the Sun's ang
 | Angle-based | portion of the night = angle/60: Isha = sunset + (Isha° / 60) · night; Fajr = sunrise − (Fajr° / 60) · night |
 | One seventh | Isha at sunset + night/7; Fajr at sunrise − night/7 |
 | Middle of the night | Isha at sunset + night/2; Fajr = sunrise − night/2 |
+| Red twilight (default) | **Isha:** the Isha angle (18°) if it is reached; else the red-twilight angle (12°, `redTwilightAngle`) if reached (note `redTwilight`); else the nearest location where 12° is reached. **Fajr:** its angle (18°) if reached; else, by default, borrowed from the nearest location where it is reached (`fajrFallback: 'nearestLocation'`), or the same 12° cascade as Isha (`'redTwilight'`) |
 | Nearest latitude | take the missing Fajr/Isha from the nearest place (same longitude and date) where that twilight angle is actually reached (*aqrab al-bilad*, see below) |
 | None | the time is left empty (`null`, `noEvent`) |
 
 "night" is sunset to the next sunrise. Portion rules also *shorten* a twilight time that lies further from sunset or
 sunrise than the portion allows. Every time that comes from a rule is marked with the note
-`highLatitudeRule` or `nearestLatitude`; the engine turns each such event into a `highLatitudeRuleUsed` anomaly so
+`highLatitudeRule`, `redTwilight` (Isha or Fajr at the red-twilight angle, the Sahibayn's ruling) or `nearestLatitude`
+(borrowed from another latitude; `borrowedLatitudes` says which one per event); the engine turns each such event into a `highLatitudeRuleUsed` anomaly so
 that you can see where the rule, not the Sun, decided the time.
 
 ### Polar day and polar night: nearest location (*aqrab al-bilad*)
@@ -148,6 +182,17 @@ The same dynamic search is used when the rule is *Nearest latitude* at a place w
 never occurs (e.g. Reykjavik in June): only the missing twilight times are borrowed, and a borrowed time that would
 fall on the wrong side of the local sunrise/sunset is replaced by the angle-based portion. Searches are memoised per
 date, longitude (0.1°) and altitude set, so they cost well under a millisecond.
+
+Isha always has to come after Maghrib, including a positive Maghrib offset (Barelvi +3 min) and an angle-based Maghrib;
+a borrowed time that would break this, or a Fajr that would not precede sunrise, is replaced by the angle-based share of
+the night. Isha by interval (Umm al-Qura) is measured from the displayed Maghrib, i.e. including its offset.
+
+The in-flight messages describe the method actually used: *red twilight (12°) per the Sahibayn*, *borrowed from the
+nearest location with a normal night (≈48.5°N on this meridian)*, or the share of the night. They name 48.5° only when
+`polarFallback` is `'fixedLatitude'`. "Flying west faster than the sun" is only reported when the aircraft's westward
+longitude rate really exceeds 15°/h (its westward ground speed exceeds the Sun's apparent 1 669.8·cos φ km/h); near the
+poles (|φ| > 80° or a sweep faster than 30°/h) the message says the aircraft crosses meridians quickly so that local
+solar time runs backwards; a repeat caused by a rule recomputing times says so.
 
 `polarFallback: 'fixedLatitude'` restores the legacy behaviour (always latitude ±48.5°). If the search ever found
 nothing (it cannot for real parameters: the equator always has sunrise and sunset) the engine falls back to ±48.5°.

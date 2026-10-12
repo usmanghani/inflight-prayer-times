@@ -12,7 +12,8 @@ export type HighLatitudeRule =
   | 'angleBased'      // portion of night = angle/60
   | 'oneSeventh'      // 1/7 of the night
   | 'middleOfNight'   // 1/2 of the night
-  | 'nearestLatitude' // compute at ±48.5° (aqrab al-bilad), same longitude
+  | 'nearestLatitude' // aqrab al-bilad: times of the nearest place where the angle is reached (dynamic; legacy ±48.5°)
+  | 'redTwilight'     // Isha at the red twilight (≈12°, Sahibayn) when the white twilight (18°) never ends
   | 'none';           // leave missing times as null
 
 export type MidnightMode = 'standard' | 'jafari'; // sunset→sunrise | sunset→fajr
@@ -48,7 +49,16 @@ export interface PrayerSettings {
   offsets: PrayerOffsets;
   /** Fallback when the sun does not rise/set (polar day/night) or a required twilight never occurs under rule 'nearestLatitude'. 'nearestLocation' (default) = nearest latitude, same longitude, where the needed events exist on that date; 'fixedLatitude' = legacy ±48.5°. */
   polarFallback?: 'nearestLocation' | 'fixedLatitude';
+  /** Sun depression (degrees) of the red twilight used by highLatitudeRule 'redTwilight' (default 12). */
+  redTwilightAngle?: number;
+  /** Under rule 'redTwilight', what Fajr does when its angle is not reached: 'nearestLocation' (default) borrows Fajr from the nearest place where it is; 'redTwilight' uses the red-twilight angle first. */
+  fajrFallback?: 'nearestLocation' | 'redTwilight';
+  /** Informational: which named profile these settings came from (for the UI). */
+  profile?: ProfileId;
 }
+
+/** Named settings bundles (see PROFILES in prayer/methods.ts). */
+export type ProfileId = 'barelvi' | 'deobandi' | 'custom';
 
 // ───────────────────────────── Prayer results ─────────────────────────────
 
@@ -63,6 +73,7 @@ export type TimeNote =
   | 'highLatitudeRule'   // derived from a high-latitude rule
   | 'interval'           // isha/maghrib by fixed interval
   | 'nearestLatitude'
+  | 'redTwilight'        // Isha taken at the red-twilight angle because the full (white) twilight angle is not reached
   | 'noEvent';           // could not be determined at all (value is null)
 
 export interface PrayerTime {
@@ -89,6 +100,8 @@ export interface StaticPrayerTimes {
    * Absent when nothing was borrowed.
    */
   borrowedLatitude?: number;
+  /** Per event: the signed latitude its time was borrowed from (events with note 'nearestLatitude'). */
+  borrowedLatitudes?: Partial<Record<PrayerName, number>>;
 }
 
 export interface Observer {

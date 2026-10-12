@@ -9,7 +9,8 @@
  * until the bracket is <= refineSeconds. See docs/ALGORITHM.md.
  *
  * Anomalies a static calculator never sees are reported alongside the events:
- *   windowRepeated  – the window sequence moved backwards (e.g. Asr → Dhuhr: flying west faster than the sun)
+ *   windowRepeated  – the window sequence moved backwards (e.g. Asr → Dhuhr: flying west faster than the sun,
+ *                     crossing meridians quickly near a pole, or a high-latitude rule recomputing the times)
  *   windowSkipped   – one or more windows never opened (e.g. Maghrib missing between Asr and Isha)
  *   highLatitudeRuleUsed – an event time came from a high-latitude rule, not from the Sun's angle
  *   polarDay / polarNight – the Sun does not set / rise at the aircraft's place that day
@@ -19,7 +20,7 @@
 import { sunAltAz } from '../astro/solar';
 import { qiblaBearing, relativeBearing } from '../geo/qibla';
 import { tzAt } from '../time/tz';
-import { windowAt } from './static';
+import { computeStaticTimes, solarDateAt, windowAt } from './static';
 import type {
   AircraftState,
   AnomalyKind,
@@ -90,58 +91,161 @@ function validDate(d: unknown): d is Date {
   return d instanceof Date && Number.isFinite(d.getTime());
 }
 
-const DIRECTION_WORDS = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
-const directionWord = (headingDeg: number): string =>
-  DIRECTION_WORDS[Math.round((((headingDeg % 360) + 360) % 360) / 45) % 8];
+/** Apparent westward speed of the Sun's shadow at the equator: 15°/h × 111.32 km/° = 1669.8 km/h (× cos φ at latitude φ). */
+const SUN_EQUATOR_KMH = 1669.8;
+const KM_PER_DEG_LON_EQUATOR = 111.32;
+/** Beyond this latitude / longitude rate the "meridians converge" wording is used instead of "faster than the sun". */
+const POLAR_LAT = 80;
+const RAPID_SWEEP_DEG_PER_H = 30;
+
+/** How the aircraft moves relative to the Sun's apparent motion at one instant. */
+export interface Motion {
+  /** Longitude rate, degrees per hour (negative = westward). */
+  lonRateDegPerH: number;
+}
+
+const isRuleNote = (n: TimeNote | undefined): boolean =>
+  n === 'highLatitudeRule' || n === 'nearestLatitude' || n === 'redTwilight';
+
+/** Human labels for the high-latitude rules (never print the raw identifier). */
+const RULE_LABEL: Record<PrayerSettings['highLatitudeRule'], string> = {
+  angleBased: 'angle-based rule',
+  oneSeventh: 'one-seventh-of-the-night rule',
+  middleOfNight: 'middle-of-the-night rule',
+  nearestLatitude: 'nearest-location rule',
+  redTwilight: 'red-twilight rule',
+  none: 'no high-latitude rule',
+};
+const ruleLabel = (r: PrayerSettings['highLatitudeRule']): string => RULE_LABEL[r] ?? 'high-latitude rule';
+
+/** "≈54.5°N" */
+const fmtLat = (lat: number): string => `≈${Math.abs(lat).toFixed(1)}°${lat >= 0 ? 'N' : 'S'}`;
 
 const SCHOLAR_NOTE =
   'Scholars generally hold that a prayer already prayed within its valid time remains valid; consult a scholar about any repeat or combining.';
 
-function repeatedMessage(prev: PrayerWindow, next: PrayerWindow, s: AircraftState): string {
+/** Exported for unit tests. */
+export function repeatedMessage(
+  prev: PrayerWindow,
+  next: PrayerWindow,
+  s: AircraftState,
+  motion: Motion,
+  settings: PrayerSettings,
+  note: TimeNote | undefined,
+): string {
   const loc = formatLatLon(s.lat, s.lon);
   const northSouth = `${Math.round(Math.abs(s.lat))}°${s.lat >= 0 ? 'N' : 'S'}`;
-  const sinH = Math.sin((fin(s.headingDeg) * Math.PI) / 180);
-  const westward = !s.onGround && sinH < -0.1;
-  const eastward = !s.onGround && sinH > 0.1;
+  const rate = s.onGround ? 0 : fin(motion.lonRateDegPerH);
+  const cosLat = Math.cos((fin(s.lat) * Math.PI) / 180);
+  const sunKmh = SUN_EQUATOR_KMH * cosLat;
+  const westKmh = Math.max(0, -rate) * KM_PER_DEG_LON_EQUATOR * cosLat;
   const sunLike = idx(next) <= idx('asr'); // the "day" windows: the sun appears to come back up
   const what = `the ${PRAYER_LABEL[next]} window re-opened after ${PRAYER_LABEL[prev]}`;
-  if (westward && sunLike) {
+
+  // 1. Near a pole (or a very fast longitude sweep) the meridians converge: the aircraft changes local solar time
+  //    much faster than the clock, whatever its ground speed.
+  if (!s.onGround && (Math.abs(s.lat) > POLAR_LAT || Math.abs(rate) > RAPID_SWEEP_DEG_PER_H)) {
+    const dir = rate < 0 ? 'local solar time runs backwards' : 'local solar time changes faster than the clock';
     return (
-      `Flying west faster than the sun near ${northSouth}: the sun appears to rise again in the west; ${what}. ` +
+      `Near ${loc} the aircraft crosses meridians very quickly (${Math.abs(rate).toFixed(0)}° of longitude per hour, ` +
+      `against 15° for the Sun), so ${dir}${sunLike && rate < 0 ? ' and the Sun appears to rise again' : ''}; ${what}. ` +
       SCHOLAR_NOTE
     );
   }
-  if (westward) {
-    return (
-      `Flying west faster than the sun near ${northSouth} (${loc}): the evening light returns; ${what}. ` + SCHOLAR_NOTE
-    );
+  // 2. Genuinely westbound faster than the Sun's apparent speed at this latitude.
+  if (!s.onGround && rate < -15) {
+    const speeds = `your westward speed (${Math.round(westKmh)} km/h) exceeds the Sun's apparent speed here (${Math.round(sunKmh)} km/h)`;
+    return sunLike
+      ? `Flying west faster than the sun near ${northSouth}: ${speeds}, so the sun appears to rise again in the west; ${what}. ${SCHOLAR_NOTE}`
+      : `Flying west faster than the sun near ${northSouth} (${loc}): ${speeds}, so the evening light returns; ${what}. ${SCHOLAR_NOTE}`;
   }
-  if (eastward) {
+  // 3. The Sun's motion is not the cause: a high-latitude rule recomputed the times as the position changed.
+  if (isRuleNote(note)) {
     return (
-      `Flying ${directionWord(s.headingDeg)} near ${loc}: the prayer times at this longitude are earlier than at the previous one; ${what}. ` +
-      SCHOLAR_NOTE
+      `Near ${loc}: the window sequence went backwards because the high-latitude handling (${ruleLabel(settings.highLatitudeRule)}) ` +
+      `recomputed the times as the aircraft moved, not because the aircraft outran the Sun; ${what}. ` + SCHOLAR_NOTE
     );
   }
   return `Near ${loc}: the window sequence went backwards; ${what}. ` + SCHOLAR_NOTE;
 }
 
-function skippedMessage(prev: PrayerWindow, next: PrayerWindow, skipped: PrayerWindow[], s: AircraftState): string {
+function skippedMessage(
+  prev: PrayerWindow,
+  next: PrayerWindow,
+  skipped: PrayerWindow[],
+  s: AircraftState,
+  motion: Motion,
+): string {
   const loc = formatLatLon(s.lat, s.lon);
   const names = skipped.map((w) => PRAYER_LABEL[w]).join(' and ');
   const high = Math.abs(s.lat) > 45 ? ' At this latitude the twilight can be very short or absent.' : '';
+  const fast =
+    !s.onGround && motion.lonRateDegPerH > 15
+      ? ` Flying east, local solar time runs ahead of the clock (${motion.lonRateDegPerH.toFixed(0)}° of longitude per hour against 15° for the Sun).`
+      : '';
   return (
     `Near ${loc}: the ${names} window${skipped.length > 1 ? 's' : ''} did not open ` +
-    `(${PRAYER_LABEL[prev]} went straight to ${PRAYER_LABEL[next]}).${high} ` +
+    `(${PRAYER_LABEL[prev]} went straight to ${PRAYER_LABEL[next]}).${high}${fast} ` +
     'Follow your chosen high-latitude rule or ask a scholar.'
   );
 }
 
-function highLatMessage(prayer: PrayerName, note: TimeNote, s: AircraftState): string {
+/** Message for an event whose time comes from a high-latitude method, describing the method actually used. */
+function highLatMessage(
+  prayer: PrayerName,
+  note: TimeNote,
+  s: AircraftState,
+  settings: PrayerSettings,
+  borrowed: number | undefined,
+): string {
   const loc = formatLatLon(s.lat, s.lon);
-  if (note === 'nearestLatitude') {
-    return `${PRAYER_LABEL[prayer]} at ${loc} is taken from the nearest-latitude rule (times of 48.5° at the same longitude) because the Sun's twilight angle is not reached here.`;
+  const label = PRAYER_LABEL[prayer];
+  if (note === 'redTwilight') {
+    const red = settings.redTwilightAngle ?? 12;
+    const full = prayer === 'fajr' ? settings.method.fajrAngle : settings.method.ishaAngle ?? 18;
+    return (
+      `${label} at ${loc} is at the red twilight (${red}°) per the Sahibayn \u2014 ${full}° is not reached here ` +
+      '(Barelvi/Ahl-e-Sunnat fatwa). It is prayed as ada, and the 18° of Imam Abu Hanifa applies again whenever it occurs.'
+    );
   }
-  return `${PRAYER_LABEL[prayer]} at ${loc} comes from your high-latitude rule (a share of the night), not from the Sun's angle, because the twilight angle is not reached or the night is too short.`;
+  if (note === 'nearestLatitude') {
+    if (settings.polarFallback === 'fixedLatitude') {
+      return `${label} at ${loc} is taken from latitude 48.5° on the same meridian (fixed-latitude fallback) because the Sun's twilight angle is not reached here.`;
+    }
+    const where = borrowed !== undefined && Number.isFinite(borrowed) ? ` (${fmtLat(borrowed)} on this meridian)` : ' on this meridian';
+    return `${label} at ${loc} is borrowed from the nearest location with a normal night${where}, because the Sun's twilight angle is not reached here.`;
+  }
+  // note === 'highLatitudeRule': a share of the night under the configured rule.
+  const share: Record<string, string> = {
+    angleBased: 'a share of the night in proportion to its angle (angle ÷ 60)',
+    oneSeventh: 'one seventh of the night',
+    middleOfNight: 'half of the night',
+  };
+  const how = share[settings.highLatitudeRule] ?? 'a share of the night (angle ÷ 60)';
+  const why =
+    settings.highLatitudeRule === 'redTwilight' || settings.highLatitudeRule === 'nearestLatitude'
+      ? 'no usable twilight time exists at the nearest location either'
+      : 'the twilight angle is not reached or the night is too short';
+  return `${label} at ${loc} is set to ${how} (${ruleLabel(settings.highLatitudeRule)}), not by the Sun's angle, because ${why}.`;
+}
+
+/** Message for polar day / night: says what actually supplies the windows. */
+function polarMessage(
+  kind: 'polarDay' | 'polarNight',
+  loc: string,
+  settings: PrayerSettings,
+  borrowed: number | undefined,
+): string {
+  const head =
+    kind === 'polarDay'
+      ? `Polar day near ${loc}: the Sun does not set on this date, so sunset-based times do not occur normally.`
+      : `Polar night near ${loc}: the Sun does not rise on this date, so sunrise and sunset do not occur normally.`;
+  if (settings.highLatitudeRule === 'none') return `${head} No high-latitude rule is set, so the missing times stay empty.`;
+  if (settings.polarFallback === 'fixedLatitude') {
+    return `${head} The times of latitude 48.5° on the same meridian are used (fixed-latitude fallback).`;
+  }
+  const where = borrowed !== undefined && Number.isFinite(borrowed) ? ` (${fmtLat(borrowed)} on this meridian)` : '';
+  return `${head} The times of the nearest location with a normal day${where} are used.`;
 }
 
 // ─────────────────────────── engine ───────────────────────────
@@ -187,6 +291,23 @@ export function computeInflight(journey: Journey, settings: PrayerSettings, opts
 
   const windowAtMs = (ms: number, s: AircraftState) =>
     windowAt(new Date(ms), { lat: s.lat, lon: s.lon, elevationM: s.altitudeM }, settings);
+
+  /** Longitude rate (°/h, negative = westward) from the positions a minute apart around t. */
+  const motionAt = (ms: number): Motion => {
+    const a = stateAtMs(ms - 30_000);
+    const b = stateAtMs(ms + 30_000);
+    const dt = (b.time.getTime() - a.time.getTime()) / 3_600_000;
+    if (!(dt > 0)) return { lonRateDegPerH: 0 };
+    let dLon = b.lon - a.lon;
+    dLon = ((((dLon + 180) % 360) + 360) % 360) - 180; // across the antimeridian
+    return { lonRateDegPerH: fin(dLon / dt) };
+  };
+
+  /** Latitude a borrowed (nearest-location) time at this place comes from, if any. */
+  const borrowedLatFor = (s: AircraftState, ms: number, prayer?: PrayerName): number | undefined => {
+    const st = computeStaticTimes({ lat: s.lat, lon: s.lon, elevationM: s.altitudeM }, solarDateAt(new Date(ms), s.lon), settings);
+    return (prayer ? st.borrowedLatitudes?.[prayer] : undefined) ?? st.borrowedLatitude;
+  };
 
   /** f(t): the active window for the exact aircraft position at t. */
   const f = (ms: number): PrayerWindow => windowAtMs(ms, stateAtMs(ms)).window;
@@ -292,14 +413,21 @@ export function computeInflight(journey: Journey, settings: PrayerSettings, opts
     let anomaly: AnomalyKind | undefined;
     if (step.kind === 'repeated') {
       anomaly = 'windowRepeated';
-      anomalies.push({ time, kind: 'windowRepeated', message: repeatedMessage(tr.from, prayer, state) });
+      anomalies.push({
+        time, kind: 'windowRepeated',
+        message: repeatedMessage(tr.from, prayer, state, motionAt(tr.ms), settings, note),
+      });
     } else if (step.kind === 'skipped') {
       anomaly = 'windowSkipped';
-      anomalies.push({ time, kind: 'windowSkipped', message: skippedMessage(tr.from, prayer, step.skipped, state) });
+      anomalies.push({
+        time, kind: 'windowSkipped',
+        message: skippedMessage(tr.from, prayer, step.skipped, state, motionAt(tr.ms)),
+      });
     }
-    if (note === 'highLatitudeRule' || note === 'nearestLatitude') {
+    if (note === 'highLatitudeRule' || note === 'nearestLatitude' || note === 'redTwilight') {
       anomaly ??= 'highLatitudeRuleUsed';
-      anomalies.push({ time, kind: 'highLatitudeRuleUsed', message: highLatMessage(prayer, note, state) });
+      const borrowed = note === 'nearestLatitude' ? borrowedLatFor(state, tr.ms, prayer) : undefined;
+      anomalies.push({ time, kind: 'highLatitudeRuleUsed', message: highLatMessage(prayer, note, state, settings, borrowed) });
     }
     events.push({ prayer, time, state, note, ...(anomaly ? { anomaly } : {}) });
   }
@@ -314,10 +442,12 @@ export function computeInflight(journey: Journey, settings: PrayerSettings, opts
         anomalies.push({
           time: sample.state.time,
           kind: dayState,
-          message:
-            dayState === 'polarDay'
-              ? `Polar day near ${loc}: the Sun does not set on this date, so sunset-based times do not occur normally; the high-latitude rule (${settings.highLatitudeRule}) decides the windows.`
-              : `Polar night near ${loc}: the Sun does not rise on this date, so sunrise and sunset do not occur normally; the high-latitude rule (${settings.highLatitudeRule}) decides the windows.`,
+          message: polarMessage(
+            dayState,
+            loc,
+            settings,
+            settings.highLatitudeRule === 'none' ? undefined : borrowedLatFor(sample.state, sample.state.time.getTime()),
+          ),
         });
       }
     }

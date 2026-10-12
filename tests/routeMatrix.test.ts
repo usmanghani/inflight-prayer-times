@@ -31,7 +31,7 @@ const SOLSTICES = ['2026-06-21', '2026-12-21'];
 const STEP = 2;
 const COARSE_STEP = 6;
 const NAMES: readonly PrayerName[] = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
-const RULES: HighLatitudeRule[] = ['angleBased', 'oneSeventh', 'middleOfNight', 'nearestLatitude'];
+const RULES: HighLatitudeRule[] = ['angleBased', 'oneSeventh', 'middleOfNight', 'nearestLatitude', 'redTwilight'];
 
 const SHAFII_MWL: PrayerSettings = { ...DEFAULT_SETTINGS, madhab: 'shafii', method: { ...METHODS.mwl } };
 const ruleVariant = (rule: HighLatitudeRule): PrayerSettings => ({ ...DEFAULT_SETTINGS, highLatitudeRule: rule });

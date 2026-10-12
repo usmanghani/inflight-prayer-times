@@ -73,8 +73,12 @@ export function prayerTasks(result: InflightResult, journey: Journey): PrayerTas
     if (prayer === 'isha') notes.push('Isha is best prayed before Islamic midnight; it ends at Fajr');
     if (startEv?.anomaly === 'windowRepeated') notes.push('this window opened again after a later window (local solar time ran backwards, e.g. flying west faster than the sun)');
     if (startEv?.anomaly === 'windowSkipped') notes.push('a window before this one never opened');
-    if (startEv && (startEv.note === 'highLatitudeRule' || startEv.note === 'nearestLatitude')) {
-      notes.push(startEv.note === 'nearestLatitude' ? 'start time from the nearest-latitude rule' : 'start time from the high-latitude rule');
+    if (startEv && (startEv.note === 'highLatitudeRule' || startEv.note === 'nearestLatitude' || startEv.note === 'redTwilight')) {
+      notes.push(
+        startEv.note === 'nearestLatitude' ? 'start time borrowed from the nearest location'
+          : startEv.note === 'redTwilight' ? 'start time at the red twilight (Sahibayn) because the full twilight angle is not reached'
+            : 'start time from the high-latitude rule',
+      );
     }
     const n = (seen.get(prayer) ?? 0) + 1;
     seen.set(prayer, n);

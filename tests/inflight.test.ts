@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { computeInflight, formatLatLon } from '../src/prayer/inflight';
+import { computeInflight, formatLatLon, repeatedMessage } from '../src/prayer/inflight';
 import { prayerTasks, windowTimeline } from '../src/prayer/summary';
 import { computeStaticTimes, windowAt } from '../src/prayer/static';
-import { DEFAULT_SETTINGS, METHODS } from '../src/prayer/methods';
+import { DEFAULT_SETTINGS, METHODS, applyProfile } from '../src/prayer/methods';
 import { buildJourney } from '../src/flight/journey';
 import { resolveAirport } from '../src/data/airports';
 import type {
@@ -456,3 +456,107 @@ describe('computeInflight: performance', () => {
   });
 });
 
+describe('anomaly messages describe the method actually used', () => {
+  const aircraft = (lat: number, lon: number, onGround = false): AircraftState => ({
+    time: Z('2026-09-22T20:00:00Z'), lat, lon, altitudeM: 11000, headingDeg: 270,
+    phase: 'cruise', legIndex: 0, onGround,
+  });
+  const none = DEFAULT_SETTINGS;
+
+  it('London in June (Barelvi default): Isha at the red twilight, Fajr borrowed from the nearest location; no 48.5 / raw ids', () => {
+    const j = stationary(51.5074, -0.1278, '2026-06-21T12:00:00Z', 24);
+    const r = computeInflight(j, DEFAULT_SETTINGS);
+    const msgs = r.anomalies.filter((a) => a.kind === 'highLatitudeRuleUsed').map((a) => a.message);
+    const isha = msgs.find((m) => m.startsWith('Isha'));
+    const fajr = msgs.find((m) => m.startsWith('Fajr'));
+    expect(isha).toBeDefined();
+    expect(isha).toMatch(/red twilight \(12°\) per the Sahibayn/);
+    expect(isha).toMatch(/18° is not reached here/);
+    expect(isha).toMatch(/Barelvi\/Ahl-e-Sunnat fatwa/);
+    expect(fajr).toBeDefined();
+    expect(fajr).toMatch(/borrowed from the nearest location with a normal night \(≈48\.[0-9]°N on this meridian\)/);
+    for (const m of msgs) {
+      expect(m).not.toMatch(/fixed-latitude|latitude 48\.5/);
+      expect(m).not.toMatch(/angleBased|oneSeventh|middleOfNight|nearestLatitude|redTwilight/);
+    }
+    // the events carry the notes
+    expect(r.events.find((e) => e.prayer === 'isha')?.note).toBe('redTwilight');
+    expect(r.events.find((e) => e.prayer === 'fajr')?.note).toBe('nearestLatitude');
+  });
+
+  it("the legacy fixed-latitude fallback is the only setting that mentions 48.5", () => {
+    const j = stationary(64.13, -21.94, '2026-06-21T12:00:00Z', 24);
+    const fixed = computeInflight(j, { ...applyProfile('deobandi'), polarFallback: 'fixedLatitude' });
+    expect(fixed.anomalies.some((a) => /latitude 48\.5°/.test(a.message))).toBe(true);
+    const dyn = computeInflight(j, applyProfile('deobandi'));
+    expect(dyn.anomalies.length).toBeGreaterThan(0);
+    for (const a of dyn.anomalies) expect(a.message).not.toMatch(/fixed-latitude|latitude 48\.5/);
+  });
+
+  it('human labels instead of identifiers for portion rules and polar days', () => {
+    const j = parallel(70, 20, 950, '2026-06-21T06:00:00Z', 12, -1);
+    for (const rule of ['angleBased', 'oneSeventh', 'middleOfNight', 'nearestLatitude', 'redTwilight', 'none'] as const) {
+      const r = computeInflight(j, withMethod({ highLatitudeRule: rule }));
+      for (const a of r.anomalies) expect(a.message, `${rule}: ${a.message}`).not.toMatch(/angleBased|oneSeventh|middleOfNight|nearestLatitude|redTwilight|highLatitudeRule/);
+    }
+    const polar = computeInflight(j, DEFAULT_SETTINGS).anomalies.find((a) => a.kind === 'polarDay');
+    expect(polar?.message).toMatch(/nearest location with a normal day \(≈6[0-9]\.[0-9]°N on this meridian\)/); // the aircraft's 11 km dip moves the limit to ~62°N
+    expect(polar?.message).not.toMatch(/fixed-latitude|latitude 48\.5/);
+    const none = computeInflight(j, withMethod({ highLatitudeRule: 'none' })).anomalies.find((a) => a.kind === 'polarDay');
+    expect(none?.message).toMatch(/No high-latitude rule/);
+    const fixed = computeInflight(j, withMethod({ polarFallback: 'fixedLatitude' })).anomalies.find((a) => a.kind === 'polarDay');
+    expect(fixed?.message).toMatch(/48\.5°/);
+  });
+
+  it('portion-rule events say which share of the night was used', () => {
+    const j = stationary(64.13, -21.94, '2026-06-21T12:00:00Z', 24);
+    const msg = (rule: 'angleBased' | 'oneSeventh' | 'middleOfNight') =>
+      computeInflight(j, withMethod({ highLatitudeRule: rule })).anomalies.filter((a) => a.kind === 'highLatitudeRuleUsed').map((a) => a.message).join(' | ');
+    expect(msg('angleBased')).toMatch(/in proportion to its angle.*angle-based rule/);
+    expect(msg('oneSeventh')).toMatch(/one seventh of the night/);
+    expect(msg('middleOfNight')).toMatch(/half of the night/);
+  });
+
+  it('"flying west faster than the sun" is only said when the westward speed really exceeds the Sun\u2019s', () => {
+    const rate = (kmh: number, lat: number) => -kmh / (111.32 * Math.cos((lat * Math.PI) / 180)); // deg/h
+    // 65°N: the Sun's apparent speed is 1669.8·cos65 = 706 km/h.
+    const fast = repeatedMessage('asr', 'dhuhr', aircraft(65, 0), { lonRateDegPerH: rate(950, 65) }, none, undefined);
+    expect(fast).toMatch(/Flying west faster than the sun/);
+    expect(fast).toMatch(/950 km\/h/);
+    expect(fast).toMatch(/706 km\/h/);
+    const slow = repeatedMessage('asr', 'dhuhr', aircraft(65, 0), { lonRateDegPerH: rate(500, 65) }, none, undefined);
+    expect(slow).not.toMatch(/faster than the sun/);
+    expect(slow).toMatch(/went backwards/);
+    // On the ground / eastbound: never.
+    expect(repeatedMessage('asr', 'dhuhr', aircraft(65, 0, true), { lonRateDegPerH: rate(950, 65) }, none, undefined)).not.toMatch(/faster than the sun/);
+    expect(repeatedMessage('asr', 'dhuhr', aircraft(65, 0), { lonRateDegPerH: -rate(950, 65) }, none, undefined)).not.toMatch(/faster than the sun/);
+  });
+
+  it('near the pole the wording is about crossing meridians quickly', () => {
+    const m = repeatedMessage('asr', 'dhuhr', aircraft(86, 10), { lonRateDegPerH: -60 }, none, undefined);
+    expect(m).toMatch(/crosses meridians very quickly/);
+    expect(m).toMatch(/local solar time runs backwards/);
+    expect(m).not.toMatch(/faster than the sun/);
+    // A fast longitude sweep at lower latitude too.
+    expect(repeatedMessage('maghrib', 'asr', aircraft(70, 10), { lonRateDegPerH: -40 }, none, undefined)).toMatch(/crosses meridians very quickly/);
+  });
+
+  it('a repeat caused by a high-latitude rule says so, not "faster than the sun"', () => {
+    const m = repeatedMessage('isha', 'maghrib', aircraft(58, 10), { lonRateDegPerH: -5 }, none, 'redTwilight');
+    expect(m).toMatch(/high-latitude handling \(red-twilight rule\)/);
+    expect(m).not.toMatch(/faster than the sun/);
+  });
+
+  it('real west-faster flight at 65°N still reports it with both speeds; the polar 85°N variant does not', () => {
+    const j65 = parallel(65, 0, 950, '2026-09-22T18:00:00Z', 10, -1);
+    const a65 = computeInflight(j65, DEFAULT_SETTINGS).anomalies.filter((a) => a.kind === 'windowRepeated');
+    expect(a65.length).toBeGreaterThan(0);
+    expect(a65[0].message).toMatch(/Flying west faster than the sun.*9[0-9]{2} km\/h/);
+    const j85 = parallel(85, 0, 700, '2026-09-22T18:00:00Z', 10, -1);
+    const a85 = computeInflight(j85, DEFAULT_SETTINGS).anomalies.filter((a) => a.kind === 'windowRepeated');
+    for (const a of a85) {
+      expect(a.message).toMatch(/crosses meridians very quickly/);
+      expect(a.message).not.toMatch(/faster than the sun/);
+    }
+  });
+});

@@ -12,7 +12,7 @@
  * Invalid Date can leave this module – a time is a valid Date or null.
  */
 import { DEG, RAD, horizonDipDeg, normalizeLon, sunPosition } from '../astro/solar';
-import { asrShadowFactor } from './methods';
+import { DEFAULT_RED_TWILIGHT_ANGLE, asrShadowFactor } from './methods';
 import type {
   HighLatitudeRule,
   Observer,
@@ -158,6 +158,8 @@ interface Core {
   fallback: boolean;
   /** Signed latitude whose times were borrowed (see StaticPrayerTimes.borrowedLatitude). */
   borrowedLat?: number;
+  /** Per-event borrowed latitude (signed). */
+  borrowedBy?: Partial<Record<PrayerName, number>>;
   dayState: StaticPrayerTimes['dayState'];
 }
 
@@ -166,6 +168,18 @@ function emptyCore(): Core {
     fajr: NO_EVENT, sunrise: NO_EVENT, dhuhr: NO_EVENT, asr: NO_EVENT, maghrib: NO_EVENT, isha: NO_EVENT,
     sunsetMs: null, nextSunriseMs: null, fallback: false, dayState: 'normal',
   };
+}
+
+/** Record that a prayer's time was borrowed from latitude `b`; `borrowedLat` keeps the one nearest the equator. */
+function markBorrowed(core: Core, prayer: PrayerName, b: number): void {
+  core.borrowedBy = { ...core.borrowedBy, [prayer]: b };
+  if (core.borrowedLat === undefined || Math.abs(b) < Math.abs(core.borrowedLat)) core.borrowedLat = b;
+}
+
+/** The Maghrib offset (ihtiyat) in ms; 0 if unset or invalid. */
+function maghribOffsetMs(s: PrayerSettings): number {
+  const o = s.offsets?.maghrib;
+  return typeof o === 'number' && Number.isFinite(o) ? o * MS_PER_MIN : 0;
 }
 
 /** Fraction of the night that Fajr/Isha may be away from sunrise/sunset under a rule. */
@@ -316,13 +330,19 @@ function computeCore(
       // Keep more specific notes ('interval', 'highLatitudeRule') that the fallback itself produced.
       const tag = (p: PrayerTime): PrayerTime => (p.time && p.note === 'ok' ? { time: p.time, note: 'nearestLatitude' } : p);
       // Dhuhr (solar transit) does not depend on latitude, so it stays an exact 'ok'.
-      return {
+      const out: Core = {
         ...c,
         fajr: tag(c.fajr), sunrise: tag(c.sunrise), asr: tag(c.asr), maghrib: tag(c.maghrib), isha: tag(c.isha),
         fallback: true,
         borrowedLat: nearLat,
+        borrowedBy: {},
         dayState,
       };
+      // Every event borrowed at the base latitude, unless its own twilight search went further.
+      for (const k of ['fajr', 'sunrise', 'asr', 'maghrib', 'isha'] as const) {
+        if (out[k].note === 'nearestLatitude') out.borrowedBy![k] = c.borrowedBy?.[k] ?? nearLat;
+      }
+      return out;
     }
   }
 
@@ -354,7 +374,8 @@ function computeCore(
   const ishaByInterval = m.ishaIntervalMin !== null;
   if (ishaByInterval) {
     const mg = asMs(core.maghrib);
-    if (mg !== null) core.isha = pt(mg + (m.ishaIntervalMin as number) * MS_PER_MIN, 'interval');
+    // Measured from the Maghrib the user sees, i.e. including any Maghrib offset (ihtiyat).
+    if (mg !== null) core.isha = pt(mg + maghribOffsetMs(s) + (m.ishaIntervalMin as number) * MS_PER_MIN, 'interval');
   } else if (m.ishaAngle !== null) {
     const is = crossing(dayStartMs, lat, lon, flat(-m.ishaAngle - twilightDip), +1);
     if (is.kind === 'time') core.isha = pt(is.ms);
@@ -388,10 +409,15 @@ function applyHighLatitudeRule(
   // `portion` is the rule's limit; `angleRule` is used when 'nearestLatitude' cannot help.
   const portionFor = (angle: number): number | null => {
     if (night === null || !(night > 0)) return null;
-    const f = nightPortion(rule === 'nearestLatitude' ? 'angleBased' : rule, angle);
+    // 'nearestLatitude' / 'redTwilight' use the angle-based share only as a last resort.
+    const f = nightPortion(rule === 'nearestLatitude' || rule === 'redTwilight' ? 'angleBased' : rule, angle);
     return f === null ? null : f * night;
   };
 
+  // A positive Maghrib offset (ihtiyat) is applied after this function, so Isha must clear it too.
+  const positiveMaghribOffsetMs = Math.max(0, maghribOffsetMs(s));
+  // Under these rules a twilight time that exists is never pulled in toward the night portion.
+  const noPortionLimit = rule === 'nearestLatitude' || rule === 'redTwilight';
   const fajrMs = asMs(core.fajr);
   const ishaMs = asMs(core.isha);
   const needFajr = fajrMs === null;
@@ -401,9 +427,6 @@ function applyHighLatitudeRule(
     // A borrowed time on the wrong side of the local sunrise/sunset is meaningless; guard it.
     const fajrOk = (ms: number) => sunriseMs === null || ms < sunriseMs;
     const ishaOk = (ms: number) => sunsetMs === null || ms > sunsetMs;
-    const note = (b: number) => {
-      if (core.borrowedLat === undefined || Math.abs(b) < Math.abs(core.borrowedLat)) core.borrowedLat = b;
-    };
     if (s.polarFallback === 'fixedLatitude') {
       // Legacy: take the missing times from latitude ±48.5° (same longitude/date).
       if (Math.abs(lat) > NEAREST_LAT) {
@@ -411,11 +434,11 @@ function applyHighLatitudeRule(
         const near = computeCore(b, lon, elevationM, dayStartMs, s, false);
         if (needFajr && near.fajr.time && fajrOk(near.fajr.time.getTime())) {
           core.fajr = { time: near.fajr.time, note: 'nearestLatitude' };
-          note(b);
+          markBorrowed(core, 'fajr', b);
         }
         if (needIsha && near.isha.time && ishaOk(near.isha.time.getTime())) {
           core.isha = { time: near.isha.time, note: 'nearestLatitude' };
-          note(b);
+          markBorrowed(core, 'isha', b);
         }
       }
     } else {
@@ -431,11 +454,56 @@ function applyHighLatitudeRule(
       };
       if (needFajr) {
         const r = borrow(m.fajrAngle, -1);
-        if (r && fajrOk(r.ms)) { core.fajr = pt(r.ms, 'nearestLatitude'); note(r.lat); }
+        if (r && fajrOk(r.ms)) { core.fajr = pt(r.ms, 'nearestLatitude'); markBorrowed(core, 'fajr', r.lat); }
       }
       if (needIsha && m.ishaAngle !== null) {
         const r = borrow(m.ishaAngle, +1);
-        if (r && ishaOk(r.ms)) { core.isha = pt(r.ms, 'nearestLatitude'); note(r.lat); }
+        if (r && ishaOk(r.ms)) { core.isha = pt(r.ms, 'nearestLatitude'); markBorrowed(core, 'isha', r.lat); }
+      }
+    }
+  }
+
+  if (rule === 'redTwilight' && (needFajr || needIsha)) {
+    // Isha: the 18° (white) twilight was not reached. Follow the Sahibayn: Isha at the red twilight (≈12°);
+    // if even that is not reached here, borrow it from the nearest place where it is. Fajr: borrow its own
+    // angle from the nearest place where it is (default) or use the red twilight first (fajrFallback).
+    const redRaw = s.redTwilightAngle;
+    const red = typeof redRaw === 'number' && Number.isFinite(redRaw) ? redRaw : DEFAULT_RED_TWILIGHT_ANGLE;
+    const twilightDip = s.dipForTwilight ? horizonDipDeg(elevationM) : 0;
+    const local = (angle: number, side: -1 | 1): number | null => {
+      const c = crossing(dayStartMs, lat, lon, () => -angle - twilightDip, side);
+      return c.kind === 'time' ? c.ms : null;
+    };
+    const borrow = (angle: number, side: -1 | 1): { ms: number; lat: number } | null => {
+      const alt = -angle - twilightDip;
+      let b: number | null = null;
+      if (s.polarFallback !== 'fixedLatitude') b = findNearestLatitude(lat, lon, dayStartMs, [alt], false);
+      if (b === null && Math.abs(lat) > NEAREST_LAT) b = lat > 0 ? NEAREST_LAT : -NEAREST_LAT; // legacy / last resort
+      if (b === null) return null;
+      const c = crossing(dayStartMs, b, lon, () => alt, side);
+      return c.kind === 'time' ? { ms: c.ms, lat: b } : null;
+    };
+    // Isha must come after Maghrib (also after an angle-based Maghrib); Fajr before sunrise.
+    const ishaBase = Math.max(sunsetMs ?? -Infinity, asMs(core.maghrib) ?? -Infinity) + positiveMaghribOffsetMs;
+    const fajrCascade = (angle: number): void => {
+      const r = local(angle, -1);
+      if (r !== null && (sunriseMs === null || r < sunriseMs)) { core.fajr = pt(r, 'redTwilight'); return; }
+      const b = borrow(angle, -1);
+      if (b && (sunriseMs === null || b.ms < sunriseMs)) { core.fajr = pt(b.ms, 'nearestLatitude'); markBorrowed(core, 'fajr', b.lat); }
+    };
+    if (needIsha && m.ishaAngle !== null) {
+      const r = local(red, +1);
+      if (r !== null && r > ishaBase) core.isha = pt(r, 'redTwilight');
+      else {
+        const b = borrow(red, +1);
+        if (b && b.ms > ishaBase) { core.isha = pt(b.ms, 'nearestLatitude'); markBorrowed(core, 'isha', b.lat); }
+      }
+    }
+    if (needFajr) {
+      if (s.fajrFallback === 'redTwilight') fajrCascade(red);
+      else {
+        const b = borrow(m.fajrAngle, -1);
+        if (b && (sunriseMs === null || b.ms < sunriseMs)) { core.fajr = pt(b.ms, 'nearestLatitude'); markBorrowed(core, 'fajr', b.lat); }
       }
     }
   }
@@ -447,7 +515,7 @@ function applyHighLatitudeRule(
     const lim = portionFor(m.fajrAngle);
     const missing = fajrNow === null;
     // For portion rules, also pull in a Fajr that is *too far* before sunrise.
-    const tooFar = rule !== 'nearestLatitude' && fajrNow !== null && lim !== null && sunriseMs - fajrNow > lim;
+    const tooFar = !noPortionLimit && fajrNow !== null && lim !== null && sunriseMs - fajrNow > lim;
     // Fajr after sunrise can only come from a borrowed time; keep the order sane.
     const wrongSide = fajrNow !== null && fajrNow >= sunriseMs;
     if (lim !== null && (missing || tooFar || wrongSide)) core.fajr = pt(sunriseMs - lim, 'highLatitudeRule');
@@ -456,9 +524,9 @@ function applyHighLatitudeRule(
     const lim = portionFor(m.ishaAngle);
     // Measure from sunset, or from an angle-based Maghrib (Ja'fari/Tehran) if that is later,
     // so that Isha can never be derived at or before Maghrib.
-    const base = Math.max(sunsetMs, asMs(core.maghrib) ?? sunsetMs);
+    const base = Math.max(sunsetMs, asMs(core.maghrib) ?? sunsetMs) + positiveMaghribOffsetMs;
     const missing = ishaNow === null;
-    const tooFar = rule !== 'nearestLatitude' && ishaNow !== null && lim !== null && ishaNow - base > lim;
+    const tooFar = !noPortionLimit && ishaNow !== null && lim !== null && ishaNow - base > lim;
     const wrongSide = ishaNow !== null && ishaNow <= base;
     if (lim !== null && (missing || tooFar || wrongSide)) core.isha = pt(base + lim, 'highLatitudeRule');
   }
@@ -526,6 +594,7 @@ export function computeStaticTimes(obs: Observer, solarDate: string, settings: P
     midnight,
     dayState: today.dayState,
     ...(today.borrowedLat !== undefined ? { borrowedLatitude: today.borrowedLat } : {}),
+    ...(today.borrowedBy && Object.keys(today.borrowedBy).length ? { borrowedLatitudes: today.borrowedBy } : {}),
   };
 }
 
