@@ -253,7 +253,7 @@ describe('profiles', () => {
 
   it('renders the red-twilight badge for a summer high-latitude itinerary', async () => {
     const a = await mount();
-    const leg = libraryFlightToLeg(findLibraryFlight('BA117')!, '2026-06-21', getAirport); // JFK -> LHR, midsummer
+    const leg = libraryFlightToLeg(findLibraryFlight('BA112')!, '2026-06-21', getAirport); // JFK -> LHR, midsummer
     a.legs.setLegs([legToDraft(leg, getAirport)]);
     await a.calculate();
     await waitFor(() => prayers().length > 0);

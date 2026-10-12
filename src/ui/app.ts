@@ -2,7 +2,7 @@
 import type { Airport } from '../types';
 import { getApiBase } from '../api/config';
 import { getHealth } from '../api/client';
-import { SAMPLE_ITINERARIES, itineraryToLegs } from '../data/flights';
+import { SAMPLE_ITINERARIES, findSampleItinerary, itineraryToLegs } from '../data/flights';
 import { ComputeClient } from './compute';
 import { clear, debounce, h, setChildren, todayIso } from './dom';
 import { createInputTabs, type InputTabs } from './inputTabs';
@@ -186,7 +186,7 @@ export async function mountApp(root: HTMLElement, opts: MountOptions = {}): Prom
   }
 
   async function loadSample(id = 'khi-dxb-sfo'): Promise<void> {
-    const it = SAMPLE_ITINERARIES.find((s) => s.id === id) ?? SAMPLE_ITINERARIES[0];
+    const it = findSampleItinerary(id) ?? SAMPLE_ITINERARIES[0];
     const legsData = itineraryToLegs(it, todayIso(), resolve);
     legs.setLegs(legsData.map((l) => legToDraft(l, resolve)));
     inputs.tabs.select('samples');

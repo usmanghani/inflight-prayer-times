@@ -2,16 +2,24 @@
 
 exports[`route matrix: snapshot of DEFAULT_SETTINGS events on 2026-10-12 > sample itineraries produce a stable event list 1`] = `
 {
-  "ewr-sin-polar": [
+  "ewr-hkg-polar": [
     "initial sunrise",
-    "dhuhr 2026-10-12T16:37Z 57.7,-72.7 air",
-    "asr 2026-10-12T18:31Z 72.2,-69.5 air",
-    "dhuhr 2026-10-12T19:53Z 82.4,-60.1 air !windowRepeated",
-    "maghrib 2026-10-12T19:58Z 83.0,-58.7 air !windowSkipped",
-    "isha 2026-10-12T20:43Z 87.7,-8.7 air !highLatitudeRuleUsed",
-    "fajr 2026-10-12T21:01Z 87.5,47.3 air !highLatitudeRuleUsed",
-    "sunrise 2026-10-12T23:40Z 68.3,98.8 air",
-    "dhuhr 2026-10-13T04:54Z 28.3,102.9 air",
+    "dhuhr 2026-10-12T16:46Z 44.9,-75.0 air",
+    "asr 2026-10-12T19:56Z 69.1,-85.5 air",
+    "dhuhr 2026-10-12T21:58Z 82.4,-124.5 air !windowRepeated",
+    "sunrise 2026-10-12T22:33Z 83.7,-161.8 air !windowRepeated",
+    "dhuhr 2026-10-13T03:53Z 47.8,118.3 air",
+  ],
+  "ewr-sin": [
+    "initial sunrise",
+    "dhuhr 2026-10-12T16:35Z 60.1,-72.3 air",
+    "asr 2026-10-12T18:18Z 73.6,-68.9 air",
+    "dhuhr 2026-10-12T19:26Z 82.4,-60.1 air !windowRepeated",
+    "maghrib 2026-10-12T19:36Z 83.7,-56.7 air !windowSkipped",
+    "isha 2026-10-12T20:16Z 87.8,-1.8 air !highLatitudeRuleUsed",
+    "fajr 2026-10-12T20:34Z 87.3,54.1 air !highLatitudeRuleUsed",
+    "sunrise 2026-10-12T23:31Z 64.8,99.6 air",
+    "dhuhr 2026-10-13T04:53Z 22.2,103.2 air",
   ],
   "jfk-doh-khi": [
     "initial isha",
@@ -76,6 +84,19 @@ exports[`route matrix: snapshot of DEFAULT_SETTINGS events on 2026-10-12 > sampl
     "sunrise 2026-10-12T15:58Z 72.4,-63.0 air !windowRepeated",
     "dhuhr 2026-10-12T18:59Z 56.8,-108.4 air",
   ],
+  "lax-ist-khi": [
+    "initial asr",
+    "maghrib 2026-10-13T01:26Z 39.9,-114.9 air",
+    "isha 2026-10-13T02:18Z 46.4,-110.1 air",
+    "fajr 2026-10-13T06:50Z 69.9,-48.2 air",
+    "sunrise 2026-10-13T07:52Z 68.9,-23.6 air",
+    "dhuhr 2026-10-13T10:39Z 54.5,16.7 air",
+    "asr 2026-10-13T13:43Z 41.3,28.7 ground IST",
+    "maghrib 2026-10-13T15:32Z 41.3,28.7 ground IST",
+    "isha 2026-10-13T16:59Z 41.3,28.7 ground IST",
+    "fajr 2026-10-14T01:46Z 37.2,43.3 air",
+    "sunrise 2026-10-14T02:32Z 35.1,48.7 air",
+  ],
   "lax-syd": [
     "initial isha",
     "fajr 2026-10-13T16:39Z -19.7,174.2 air",
@@ -116,19 +137,6 @@ exports[`route matrix: snapshot of DEFAULT_SETTINGS events on 2026-10-12 > sampl
     "isha 2026-10-13T15:09Z 25.8,55.3 air",
     "fajr 2026-10-14T00:49Z 25.3,57.9 air",
     "sunrise 2026-10-14T01:30Z 25.1,62.8 air",
-  ],
-  "sfo-ist-khi": [
-    "initial asr",
-    "maghrib 2026-10-13T01:34Z 45.6,-117.9 air",
-    "isha 2026-10-13T02:34Z 53.0,-112.2 air",
-    "fajr 2026-10-13T06:25Z 73.1,-48.5 air",
-    "sunrise 2026-10-13T07:33Z 71.1,-17.8 air",
-    "dhuhr 2026-10-13T10:25Z 53.4,20.1 air",
-    "asr 2026-10-13T13:43Z 41.3,28.7 ground IST",
-    "maghrib 2026-10-13T15:32Z 41.3,28.7 ground IST",
-    "isha 2026-10-13T16:59Z 41.3,28.7 ground IST",
-    "fajr 2026-10-14T01:46Z 37.2,43.3 air",
-    "sunrise 2026-10-14T02:32Z 35.1,48.7 air",
   ],
   "sfo-lhr-dxb-khi": [
     "initial dhuhr",

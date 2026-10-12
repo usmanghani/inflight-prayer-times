@@ -172,184 +172,44 @@ attribution) together with their snapshot.
 
 Every `FLIGHT_LIBRARY` entry was looked up on [adsbdb.com](https://www.adsbdb.com) by ICAO callsign (IATA number as fallback) on 2026-10-12, and the origin/destination was compared with the library. Raw data: `tests/fixtures/library-verification.json`. adsbdb is crowd-sourced and describes the route *currently* associated with a callsign, so a `mismatch` means "check this", not necessarily "wrong"; `not-found` usually means the flight is seasonal/retired or simply missing from adsbdb.
 
-**98 match · 122 mismatch · 3 not found · 0 error** (of 223).
+**215 match · 0 mismatch · 0 not found · 0 error** (of 215).
 
 | Airline | ICAO | Flights | Match | Mismatch | Not found | Error |
 |---|---|---:|---:|---:|---:|---:|
-| AA | AAL | 8 | 2 | 6 | 0 | 0 |
+| AA | AAL | 6 | 6 | 0 | 0 | 0 |
 | AF | AFR | 4 | 4 | 0 | 0 | 0 |
-| AI | AIC | 6 | 4 | 2 | 0 | 0 |
+| AI | AIC | 6 | 6 | 0 | 0 | 0 |
 | AT | RAM | 2 | 2 | 0 | 0 | 0 |
-| AV | AVA | 4 | 0 | 4 | 0 | 0 |
-| BA | BAW | 10 | 2 | 8 | 0 | 0 |
-| BR | EVA | 4 | 0 | 4 | 0 | 0 |
-| CX | CPA | 6 | 0 | 6 | 0 | 0 |
-| DL | DAL | 6 | 2 | 4 | 0 | 0 |
-| EK | UAE | 50 | 34 | 15 | 1 | 0 |
-| ET | ETH | 4 | 2 | 2 | 0 | 0 |
-| EY | ETD | 4 | 0 | 4 | 0 | 0 |
+| AV | AVA | 2 | 2 | 0 | 0 | 0 |
+| BA | BAW | 10 | 10 | 0 | 0 | 0 |
+| BR | EVA | 4 | 4 | 0 | 0 | 0 |
+| CX | CPA | 8 | 8 | 0 | 0 | 0 |
+| DL | DAL | 6 | 6 | 0 | 0 | 0 |
+| EK | UAE | 50 | 50 | 0 | 0 | 0 |
+| ET | ETH | 3 | 3 | 0 | 0 | 0 |
+| EY | ETD | 4 | 4 | 0 | 0 | 0 |
 | FZ | FDB | 2 | 2 | 0 | 0 | 0 |
-| IB | IBE | 2 | 0 | 2 | 0 | 0 |
-| JL | JAL | 2 | 0 | 2 | 0 | 0 |
+| IB | IBE | 2 | 2 | 0 | 0 | 0 |
+| JL | JAL | 2 | 2 | 0 | 0 | 0 |
 | KE | KAL | 6 | 6 | 0 | 0 | 0 |
 | KL | KLM | 4 | 4 | 0 | 0 | 0 |
-| KQ | KQA | 2 | 0 | 0 | 2 | 0 |
-| LA | LAN | 4 | 0 | 4 | 0 | 0 |
-| LH | DLH | 4 | 0 | 4 | 0 | 0 |
-| MS | MSR | 2 | 0 | 2 | 0 | 0 |
-| MU | CES | 2 | 0 | 2 | 0 | 0 |
-| NH | ANA | 4 | 0 | 4 | 0 | 0 |
-| NZ | ANZ | 6 | 2 | 4 | 0 | 0 |
-| PK | PIA | 4 | 0 | 4 | 0 | 0 |
-| PR | PAL | 4 | 1 | 3 | 0 | 0 |
-| QF | QFA | 4 | 4 | 0 | 0 | 0 |
-| QR | QTR | 23 | 14 | 9 | 0 | 0 |
+| LA | LAN | 6 | 6 | 0 | 0 | 0 |
+| LH | DLH | 4 | 4 | 0 | 0 | 0 |
+| MS | MSR | 2 | 2 | 0 | 0 | 0 |
+| MU | CES | 2 | 2 | 0 | 0 | 0 |
+| NH | ANA | 4 | 4 | 0 | 0 | 0 |
+| NZ | ANZ | 4 | 4 | 0 | 0 | 0 |
+| PK | PIA | 4 | 4 | 0 | 0 | 0 |
+| PR | PAL | 2 | 2 | 0 | 0 | 0 |
+| QF | QFA | 6 | 6 | 0 | 0 | 0 |
+| QR | QTR | 23 | 23 | 0 | 0 | 0 |
 | SA | SAA | 2 | 2 | 0 | 0 | 0 |
-| SQ | SIA | 4 | 2 | 2 | 0 | 0 |
-| SV | SVA | 4 | 0 | 4 | 0 | 0 |
-| TK | THY | 12 | 7 | 5 | 0 | 0 |
-| UA | UAL | 18 | 2 | 16 | 0 | 0 |
+| SQ | SIA | 4 | 4 | 0 | 0 | 0 |
+| SV | SVA | 4 | 4 | 0 | 0 | 0 |
+| TK | THY | 11 | 11 | 0 | 0 | 0 |
+| UA | UAL | 16 | 16 | 0 | 0 | 0 |
 
-### Mismatches
-
-52 are the same city pair in the opposite direction (the library numbers the two directions the other way round, or adsbdb has it inverted), 70 are a different pair (seasonal re-routing, retimed / renumbered flight, or a wrong adsbdb entry). Verify against an airline timetable before changing the library.
-
-| Flight | Library | adsbdb | Kind |
-|---|---|---|---|
-| PK211 | KHI-DXB | ISB-DXB | different |
-| PK212 | DXB-KHI | DXB-ISB | different |
-| QR608 | DOH-KHI | DOH-LHE | different |
-| TK708 | KHI-IST | IST-DAC | different |
-| TK709 | IST-KHI | DAC-KHI | different |
-| SV706 | KHI-JED | SUB-DPS | different |
-| SV705 | JED-KHI | KHI-JED | reversed |
-| PK741 | KHI-JED | ISB-JED | different |
-| PK742 | JED-KHI | JED-ISB | different |
-| SV718 | KHI-RUH | JED-LHE | different |
-| SV717 | RUH-KHI | KHI-RUH | reversed |
-| EY201 | KHI-AUH | BOM-AUH | different |
-| EY200 | AUH-KHI | AUH-BOM | different |
-| EK511 | DXB-DEL | DEL-DXB | reversed |
-| EK512 | DEL-DXB | DXB-DEL | reversed |
-| AI175 | SFO-BLR | BLR-SFO | reversed |
-| AI176 | BLR-SFO | SFO-BLR | reversed |
-| UA83 | EWR-DEL | DEL-EWR | reversed |
-| UA82 | DEL-EWR | EWR-DEL | reversed |
-| UA863 | SFO-DEL | SFO-SYD | different |
-| UA862 | DEL-SFO | HKG-SFO | different |
-| EK201 | JFK-DXB | DXB-JFK | reversed |
-| EK202 | DXB-JFK | JFK-DXB | reversed |
-| EK203 | JFK-DXB | DXB-JFK | reversed |
-| EK204 | DXB-JFK | JFK-DXB | reversed |
-| EK211 | DXB-EWR | DXB-IAH | different |
-| EK212 | EWR-DXB | IAH-DXB | different |
-| QR735 | DOH-SFO | GVA-LHR | different |
-| QR736 | SFO-DOH | LHR-GVA | different |
-| QR727 | DOH-SEA | DOH-PHL | different |
-| QR728 | SEA-DOH | PHL-DOH | different |
-| QR721 | DOH-DFW | DOH-ORD | different |
-| QR722 | DFW-DOH | ORD-DOH | different |
-| EY11 | AUH-JFK | AUH-LHR | different |
-| EY12 | JFK-AUH | LHR-AUH | different |
-| TK80 | SFO-IST | IST-JNB | different |
-| TK33 | IST-IAD | IST-IAH | different |
-| TK34 | IAD-IST | IAH-IST | different |
-| MS986 | CAI-JFK | JFK-CAI | reversed |
-| MS985 | JFK-CAI | CAI-JFK | reversed |
-| BA117 | JFK-LHR | LHR-JFK | reversed |
-| BA112 | LHR-JFK | JFK-LHR | reversed |
-| BA283 | SFO-LHR | LHR-LAX | different |
-| BA286 | LHR-SFO | SFO-LHR | reversed |
-| BA269 | LAX-LHR | LHR-LAX | reversed |
-| BA268 | LHR-LAX | LAX-LHR | reversed |
-| BA49 | SEA-LHR | LHR-SEA | reversed |
-| BA48 | LHR-SEA | SEA-LHR | reversed |
-| LH400 | JFK-FRA | FRA-JFK | reversed |
-| LH401 | FRA-JFK | JFK-FRA | reversed |
-| LH455 | FRA-SFO | SFO-FRA | reversed |
-| LH454 | SFO-FRA | FRA-SFO | reversed |
-| IB6251 | JFK-MAD | MAD-JFK | reversed |
-| IB6250 | MAD-JFK | JFK-MAD | reversed |
-| UA901 | IAD-LHR | SFO-LHR | different |
-| UA900 | LHR-IAD | LHR-SFO | different |
-| QR7 | LHR-DOH | DOH-LHR | reversed |
-| QR8 | DOH-LHR | LHR-DOH | reversed |
-| ET500 | IAD-ADD | DUB-IAD | different |
-| ET501 | ADD-IAD | IAD-ADD | reversed |
-| DL59 | JFK-ACC | LHR-BOS | different |
-| DL58 | ACC-JFK | BOS-LHR | different |
-| DL57 | ATL-LOS | BOM-DTW | different |
-| DL56 | LOS-ATL | SLC-AMS | different |
-| EK773 | DXB-CPT | CPT-DXB | reversed |
-| AA930 | JFK-GRU | GRU-MIA | different |
-| AA931 | GRU-JFK | MIA-EZE | different |
-| AA950 | JFK-EZE | GRU-JFK | different |
-| AA951 | EZE-JFK | JFK-GRU | different |
-| LA532 | JFK-SCL | SCL-JFK | reversed |
-| LA533 | SCL-JFK | JFK-SCL | reversed |
-| AV22 | JFK-BOG | BOG-MEX | different |
-| AV21 | BOG-JFK | JFK-BOG | reversed |
-| LA2465 | JFK-LIM | LIM-AEP | different |
-| LA2466 | LIM-JFK | EZE-LIM | different |
-| AV15 | LAX-BOG | MAD-BOG | different |
-| AV16 | BOG-LAX | BOG-MAD | different |
-| EK247 | DXB-GRU | GIG-EZE | different |
-| EK248 | GRU-DXB | GIG-DXB | different |
-| UA839 | SFO-SYD | LAX-SYD | different |
-| UA840 | SYD-SFO | MEL-LAX | different |
-| UA100 | SFO-BNE | SYD-IAH | different |
-| UA101 | BNE-SFO | IAH-SYD | different |
-| EK412 | DXB-SYD | SYD-CHC | different |
-| EK413 | SYD-DXB | CHC-SYD | different |
-| NZ6 | SFO-AKL | AKL-LAX | different |
-| NZ5 | AKL-SFO | LAX-AKL | different |
-| NZ8 | JFK-AKL | AKL-SFO | different |
-| NZ7 | AKL-JFK | SFO-AKL | different |
-| CX840 | JFK-HKG | HKG-JFK | reversed |
-| CX841 | HKG-JFK | JFK-HKG | reversed |
-| AA177 | DFW-HKG | JFK-SFO | different |
-| AA178 | HKG-DFW | DCA-BOS | different |
-| SQ32 | SFO-SIN | SIN-SFO | reversed |
-| SQ31 | SIN-SFO | SFO-SIN | reversed |
-| PR102 | MNL-SFO | MNL-LAX | different |
-| PR103 | SFO-MNL | LAX-MNL | different |
-| PR127 | JFK-MNL | JFK-YVR | different |
-| EK343 | DXB-KUL | KUL-DXB | reversed |
-| EK344 | KUL-DXB | DXB-KUL | reversed |
-| CX872 | SFO-HKG | HKG-SFO | reversed |
-| CX873 | HKG-SFO | SFO-HKG | reversed |
-| CX880 | LAX-HKG | HKG-LAX | reversed |
-| CX881 | HKG-LAX | LAX-HKG | reversed |
-| JL6 | JFK-HND | HND-JFK | reversed |
-| JL5 | HND-JFK | JFK-HND | reversed |
-| NH10 | JFK-HND | NRT-JFK | different |
-| NH9 | HND-JFK | JFK-NRT | different |
-| UA837 | SFO-HND | SFO-NRT | different |
-| UA838 | HND-SFO | NRT-SFO | different |
-| NH106 | LAX-HND | HND-LAX | reversed |
-| NH105 | HND-LAX | LAX-HND | reversed |
-| BR12 | LAX-TPE | TPE-LAX | reversed |
-| BR11 | TPE-LAX | LAX-TPE | reversed |
-| BR8 | SFO-TPE | TPE-SFO | reversed |
-| BR7 | TPE-SFO | SFO-TPE | reversed |
-| MU587 | LAX-PVG | PVG-JFK | different |
-| MU588 | PVG-LAX | JFK-PVG | different |
-| UA857 | SFO-PVG | ICN-PVG | different |
-| UA858 | PVG-SFO | ICN-SFO | different |
-| UA1 | EWR-SFO | SFO-SIN | different |
-| UA2 | SFO-EWR | SIN-SFO | different |
-
-<details><summary>Not found / error (3)</summary>
-
-| Flight | Library route | Status |
-|---|---|---|
-| KQ2 | JFK-NBO | not-found |
-| KQ3 | NBO-JFK | not-found |
-| EK774 | CPT-DXB | not-found |
-
-</details>
-
-<details><summary>All 223 flights</summary>
+<details><summary>All 215 flights</summary>
 
 | Flight | Library | adsbdb | Status |
 |---|---|---|---|
@@ -357,23 +217,23 @@ Every `FLIGHT_LIBRARY` entry was looked up on [adsbdb.com](https://www.adsbdb.co
 | EK603 | KHI-DXB | KHI-DXB | match |
 | EK600 | DXB-KHI | DXB-KHI | match |
 | EK602 | DXB-KHI | DXB-KHI | match |
-| PK211 | KHI-DXB | ISB-DXB | mismatch |
-| PK212 | DXB-KHI | DXB-ISB | mismatch |
+| PK213 | KHI-DXB | KHI-DXB | match |
+| PK214 | DXB-KHI | DXB-KHI | match |
 | FZ330 | KHI-DXB | KHI-DXB | match |
 | FZ331 | DXB-KHI | DXB-KHI | match |
 | QR605 | KHI-DOH | KHI-DOH | match |
 | QR604 | DOH-KHI | DOH-KHI | match |
-| QR608 | DOH-KHI | DOH-LHE | mismatch |
-| TK708 | KHI-IST | IST-DAC | mismatch |
-| TK709 | IST-KHI | DAC-KHI | mismatch |
-| SV706 | KHI-JED | SUB-DPS | mismatch |
-| SV705 | JED-KHI | KHI-JED | mismatch |
-| PK741 | KHI-JED | ISB-JED | mismatch |
-| PK742 | JED-KHI | JED-ISB | mismatch |
-| SV718 | KHI-RUH | JED-LHE | mismatch |
-| SV717 | RUH-KHI | KHI-RUH | mismatch |
-| EY201 | KHI-AUH | BOM-AUH | mismatch |
-| EY200 | AUH-KHI | AUH-BOM | mismatch |
+| QR606 | DOH-KHI | DOH-KHI | match |
+| TK719 | KHI-IST | KHI-IST | match |
+| TK718 | IST-KHI | IST-KHI | match |
+| SV701 | KHI-JED | KHI-JED | match |
+| SV700 | JED-KHI | JED-KHI | match |
+| PK731 | KHI-JED | KHI-JED | match |
+| PK732 | JED-KHI | JED-KHI | match |
+| SV707 | KHI-RUH | KHI-RUH | match |
+| SV708 | RUH-KHI | RUH-KHI | match |
+| EY299 | KHI-AUH | KHI-AUH | match |
+| EY298 | AUH-KHI | AUH-KHI | match |
 | EK622 | DXB-LHE | DXB-LHE | match |
 | EK623 | LHE-DXB | LHE-DXB | match |
 | QR628 | DOH-LHE | DOH-LHE | match |
@@ -384,8 +244,8 @@ Every `FLIGHT_LIBRARY` entry was looked up on [adsbdb.com](https://www.adsbdb.co
 | QR633 | ISB-DOH | ISB-DOH | match |
 | TK710 | IST-ISB | IST-ISB | match |
 | TK711 | ISB-IST | ISB-IST | match |
-| EK511 | DXB-DEL | DEL-DXB | mismatch |
-| EK512 | DEL-DXB | DXB-DEL | mismatch |
+| EK512 | DXB-DEL | DXB-DEL | match |
+| EK511 | DEL-DXB | DEL-DXB | match |
 | EK500 | DXB-BOM | DXB-BOM | match |
 | EK501 | BOM-DXB | BOM-DXB | match |
 | EK568 | DXB-BLR | DXB-BLR | match |
@@ -396,18 +256,18 @@ Every `FLIGHT_LIBRARY` entry was looked up on [adsbdb.com](https://www.adsbdb.co
 | AI102 | JFK-DEL | JFK-DEL | match |
 | AI173 | DEL-SFO | DEL-SFO | match |
 | AI174 | SFO-DEL | SFO-DEL | match |
-| AI175 | SFO-BLR | BLR-SFO | mismatch |
-| AI176 | BLR-SFO | SFO-BLR | mismatch |
-| UA83 | EWR-DEL | DEL-EWR | mismatch |
-| UA82 | DEL-EWR | EWR-DEL | mismatch |
-| UA863 | SFO-DEL | SFO-SYD | mismatch |
-| UA862 | DEL-SFO | HKG-SFO | mismatch |
-| EK201 | JFK-DXB | DXB-JFK | mismatch |
-| EK202 | DXB-JFK | JFK-DXB | mismatch |
-| EK203 | JFK-DXB | DXB-JFK | mismatch |
-| EK204 | DXB-JFK | JFK-DXB | mismatch |
-| EK211 | DXB-EWR | DXB-IAH | mismatch |
-| EK212 | EWR-DXB | IAH-DXB | mismatch |
+| AI176 | SFO-BLR | SFO-BLR | match |
+| AI175 | BLR-SFO | BLR-SFO | match |
+| UA82 | EWR-DEL | EWR-DEL | match |
+| UA83 | DEL-EWR | DEL-EWR | match |
+| UA868 | SFO-DEL | SFO-DEL | match |
+| UA867 | DEL-SFO | DEL-SFO | match |
+| EK202 | JFK-DXB | JFK-DXB | match |
+| EK201 | DXB-JFK | DXB-JFK | match |
+| EK204 | JFK-DXB | JFK-DXB | match |
+| EK203 | DXB-JFK | DXB-JFK | match |
+| EK223 | DXB-EWR | DXB-EWR | match |
+| EK224 | EWR-DXB | EWR-DXB | match |
 | EK231 | DXB-IAD | DXB-IAD | match |
 | EK232 | IAD-DXB | IAD-DXB | match |
 | EK225 | DXB-SFO | DXB-SFO | match |
@@ -422,70 +282,66 @@ Every `FLIGHT_LIBRARY` entry was looked up on [adsbdb.com](https://www.adsbdb.co
 | QR702 | JFK-DOH | JFK-DOH | match |
 | QR707 | DOH-IAD | DOH-IAD | match |
 | QR708 | IAD-DOH | IAD-DOH | match |
-| QR735 | DOH-SFO | GVA-LHR | mismatch |
-| QR736 | SFO-DOH | LHR-GVA | mismatch |
+| QR737 | DOH-SFO | DOH-SFO | match |
+| QR738 | SFO-DOH | SFO-DOH | match |
 | QR739 | DOH-LAX | DOH-LAX | match |
 | QR740 | LAX-DOH | LAX-DOH | match |
-| QR727 | DOH-SEA | DOH-PHL | mismatch |
-| QR728 | SEA-DOH | PHL-DOH | mismatch |
-| QR721 | DOH-DFW | DOH-ORD | mismatch |
-| QR722 | DFW-DOH | ORD-DOH | mismatch |
-| EY11 | AUH-JFK | AUH-LHR | mismatch |
-| EY12 | JFK-AUH | LHR-AUH | mismatch |
+| QR727 | DOH-PHL | DOH-PHL | match |
+| QR728 | PHL-DOH | PHL-DOH | match |
+| QR729 | DOH-DFW | DOH-DFW | match |
+| QR730 | DFW-DOH | DFW-DOH | match |
+| EY101 | AUH-JFK | AUH-JFK | match |
+| EY100 | JFK-AUH | JFK-AUH | match |
 | TK1 | IST-JFK | IST-JFK | match |
 | TK2 | JFK-IST | JFK-IST | match |
 | TK79 | IST-SFO | IST-SFO | match |
-| TK80 | SFO-IST | IST-JNB | mismatch |
 | TK9 | IST-LAX | IST-LAX | match |
 | TK10 | LAX-IST | LAX-IST | match |
-| TK33 | IST-IAD | IST-IAH | mismatch |
-| TK34 | IAD-IST | IAH-IST | mismatch |
+| TK7 | IST-IAD | IST-IAD | match |
+| TK8 | IAD-IST | IAD-IST | match |
 | EK927 | DXB-CAI | DXB-CAI | match |
 | EK928 | CAI-DXB | CAI-DXB | match |
 | AT200 | CMN-JFK | CMN-JFK | match |
 | AT201 | JFK-CMN | JFK-CMN | match |
-| MS986 | CAI-JFK | JFK-CAI | mismatch |
-| MS985 | JFK-CAI | CAI-JFK | mismatch |
-| BA117 | JFK-LHR | LHR-JFK | mismatch |
-| BA112 | LHR-JFK | JFK-LHR | mismatch |
-| BA283 | SFO-LHR | LHR-LAX | mismatch |
-| BA286 | LHR-SFO | SFO-LHR | mismatch |
-| BA269 | LAX-LHR | LHR-LAX | mismatch |
-| BA268 | LHR-LAX | LAX-LHR | mismatch |
-| BA49 | SEA-LHR | LHR-SEA | mismatch |
-| BA48 | LHR-SEA | SEA-LHR | mismatch |
+| MS985 | CAI-JFK | CAI-JFK | match |
+| MS986 | JFK-CAI | JFK-CAI | match |
+| BA112 | JFK-LHR | JFK-LHR | match |
+| BA117 | LHR-JFK | LHR-JFK | match |
+| BA286 | SFO-LHR | SFO-LHR | match |
+| BA285 | LHR-SFO | LHR-SFO | match |
+| BA268 | LAX-LHR | LAX-LHR | match |
+| BA269 | LHR-LAX | LHR-LAX | match |
+| BA48 | SEA-LHR | SEA-LHR | match |
+| BA49 | LHR-SEA | LHR-SEA | match |
 | AF7 | JFK-CDG | JFK-CDG | match |
 | AF8 | CDG-JFK | CDG-JFK | match |
 | AF83 | SFO-CDG | SFO-CDG | match |
 | AF84 | CDG-SFO | CDG-SFO | match |
-| LH400 | JFK-FRA | FRA-JFK | mismatch |
-| LH401 | FRA-JFK | JFK-FRA | mismatch |
-| LH455 | FRA-SFO | SFO-FRA | mismatch |
-| LH454 | SFO-FRA | FRA-SFO | mismatch |
+| LH401 | JFK-FRA | JFK-FRA | match |
+| LH400 | FRA-JFK | FRA-JFK | match |
+| LH454 | FRA-SFO | FRA-SFO | match |
+| LH455 | SFO-FRA | SFO-FRA | match |
 | KL642 | JFK-AMS | JFK-AMS | match |
 | KL641 | AMS-JFK | AMS-JFK | match |
 | KL605 | AMS-SFO | AMS-SFO | match |
 | KL606 | SFO-AMS | SFO-AMS | match |
-| IB6251 | JFK-MAD | MAD-JFK | mismatch |
-| IB6250 | MAD-JFK | JFK-MAD | mismatch |
-| UA901 | IAD-LHR | SFO-LHR | mismatch |
-| UA900 | LHR-IAD | LHR-SFO | mismatch |
+| IB6250 | JFK-MAD | JFK-MAD | match |
+| IB6251 | MAD-JFK | MAD-JFK | match |
+| UA918 | IAD-LHR | IAD-LHR | match |
+| UA919 | LHR-IAD | LHR-IAD | match |
 | EK2 | LHR-DXB | LHR-DXB | match |
 | EK1 | DXB-LHR | DXB-LHR | match |
 | BA107 | LHR-DXB | LHR-DXB | match |
 | BA106 | DXB-LHR | DXB-LHR | match |
-| QR7 | LHR-DOH | DOH-LHR | mismatch |
-| QR8 | DOH-LHR | LHR-DOH | mismatch |
-| KQ2 | JFK-NBO |  | not-found |
-| KQ3 | NBO-JFK |  | not-found |
-| ET500 | IAD-ADD | DUB-IAD | mismatch |
-| ET501 | ADD-IAD | IAD-ADD | mismatch |
+| QR8 | LHR-DOH | LHR-DOH | match |
+| QR7 | DOH-LHR | DOH-LHR | match |
+| ET501 | IAD-ADD | IAD-ADD | match |
 | ET600 | ADD-DXB | ADD-DXB | match |
 | ET601 | DXB-ADD | DXB-ADD | match |
-| DL59 | JFK-ACC | LHR-BOS | mismatch |
-| DL58 | ACC-JFK | BOS-LHR | mismatch |
-| DL57 | ATL-LOS | BOM-DTW | mismatch |
-| DL56 | LOS-ATL | SLC-AMS | mismatch |
+| DL156 | JFK-ACC | JFK-ACC | match |
+| DL157 | ACC-JFK | ACC-JFK | match |
+| DL54 | ATL-LOS | ATL-LOS | match |
+| DL55 | LOS-ATL | LOS-ATL | match |
 | EK783 | DXB-LOS | DXB-LOS | match |
 | EK784 | LOS-DXB | LOS-DXB | match |
 | DL200 | ATL-JNB | ATL-JNB | match |
@@ -494,68 +350,66 @@ Every `FLIGHT_LIBRARY` entry was looked up on [adsbdb.com](https://www.adsbdb.co
 | SA203 | JNB-JFK | JNB-JFK | match |
 | EK761 | DXB-JNB | DXB-JNB | match |
 | EK762 | JNB-DXB | JNB-DXB | match |
-| EK773 | DXB-CPT | CPT-DXB | mismatch |
-| EK774 | CPT-DXB |  | not-found |
-| AA930 | JFK-GRU | GRU-MIA | mismatch |
-| AA931 | GRU-JFK | MIA-EZE | mismatch |
-| AA950 | JFK-EZE | GRU-JFK | mismatch |
-| AA951 | EZE-JFK | JFK-GRU | mismatch |
-| LA532 | JFK-SCL | SCL-JFK | mismatch |
-| LA533 | SCL-JFK | JFK-SCL | mismatch |
-| AV22 | JFK-BOG | BOG-MEX | mismatch |
-| AV21 | BOG-JFK | JFK-BOG | mismatch |
-| LA2465 | JFK-LIM | LIM-AEP | mismatch |
-| LA2466 | LIM-JFK | EZE-LIM | mismatch |
-| AV15 | LAX-BOG | MAD-BOG | mismatch |
-| AV16 | BOG-LAX | BOG-MAD | mismatch |
-| EK247 | DXB-GRU | GIG-EZE | mismatch |
-| EK248 | GRU-DXB | GIG-DXB | mismatch |
+| EK772 | DXB-CPT | DXB-CPT | match |
+| EK773 | CPT-DXB | CPT-DXB | match |
+| AA951 | JFK-GRU | JFK-GRU | match |
+| AA950 | GRU-JFK | GRU-JFK | match |
+| AA953 | JFK-EZE | JFK-EZE | match |
+| AA954 | EZE-JFK | EZE-JFK | match |
+| LA533 | JFK-SCL | JFK-SCL | match |
+| LA532 | SCL-JFK | SCL-JFK | match |
+| AV21 | JFK-BOG | JFK-BOG | match |
+| AV20 | BOG-JFK | BOG-JFK | match |
+| LA2467 | JFK-LIM | JFK-LIM | match |
+| LA2468 | LIM-JFK | LIM-JFK | match |
+| LA535 | LAX-LIM | LAX-LIM | match |
+| LA534 | LIM-LAX | LIM-LAX | match |
+| EK261 | DXB-GRU | DXB-GRU | match |
+| EK262 | GRU-DXB | GRU-DXB | match |
 | QF12 | LAX-SYD | LAX-SYD | match |
 | QF11 | SYD-LAX | SYD-LAX | match |
 | QF94 | LAX-MEL | LAX-MEL | match |
 | QF93 | MEL-LAX | MEL-LAX | match |
-| UA839 | SFO-SYD | LAX-SYD | mismatch |
-| UA840 | SYD-SFO | MEL-LAX | mismatch |
-| UA100 | SFO-BNE | SYD-IAH | mismatch |
-| UA101 | BNE-SFO | IAH-SYD | mismatch |
-| EK412 | DXB-SYD | SYD-CHC | mismatch |
-| EK413 | SYD-DXB | CHC-SYD | mismatch |
+| UA863 | SFO-SYD | SFO-SYD | match |
+| UA870 | SYD-SFO | SYD-SFO | match |
+| QF16 | LAX-BNE | LAX-BNE | match |
+| QF15 | BNE-LAX | BNE-LAX | match |
+| EK414 | DXB-SYD | DXB-SYD | match |
+| EK415 | SYD-DXB | SYD-DXB | match |
 | EK408 | DXB-MEL | DXB-MEL | match |
 | EK407 | MEL-DXB | MEL-DXB | match |
 | EK430 | DXB-BNE | DXB-BNE | match |
 | EK431 | BNE-DXB | BNE-DXB | match |
-| NZ6 | SFO-AKL | AKL-LAX | mismatch |
-| NZ5 | AKL-SFO | LAX-AKL | mismatch |
+| NZ7 | SFO-AKL | SFO-AKL | match |
+| NZ8 | AKL-SFO | AKL-SFO | match |
 | NZ2 | LAX-AKL | LAX-AKL | match |
 | NZ1 | AKL-LAX | AKL-LAX | match |
-| NZ8 | JFK-AKL | AKL-SFO | mismatch |
-| NZ7 | AKL-JFK | SFO-AKL | mismatch |
 | SQ21 | EWR-SIN | EWR-SIN | match |
 | SQ22 | SIN-EWR | SIN-EWR | match |
-| CX840 | JFK-HKG | HKG-JFK | mismatch |
-| CX841 | HKG-JFK | JFK-HKG | mismatch |
-| AA177 | DFW-HKG | JFK-SFO | mismatch |
-| AA178 | HKG-DFW | DCA-BOS | mismatch |
-| SQ32 | SFO-SIN | SIN-SFO | mismatch |
-| SQ31 | SIN-SFO | SFO-SIN | mismatch |
-| PR102 | MNL-SFO | MNL-LAX | mismatch |
-| PR103 | SFO-MNL | LAX-MNL | mismatch |
-| PR126 | MNL-JFK | MNL-JFK | match |
-| PR127 | JFK-MNL | JFK-YVR | mismatch |
-| EK343 | DXB-KUL | KUL-DXB | mismatch |
-| EK344 | KUL-DXB | DXB-KUL | mismatch |
-| CX872 | SFO-HKG | HKG-SFO | mismatch |
-| CX873 | HKG-SFO | SFO-HKG | mismatch |
-| CX880 | LAX-HKG | HKG-LAX | mismatch |
-| CX881 | HKG-LAX | LAX-HKG | mismatch |
-| JL6 | JFK-HND | HND-JFK | mismatch |
-| JL5 | HND-JFK | JFK-HND | mismatch |
-| NH10 | JFK-HND | NRT-JFK | mismatch |
-| NH9 | HND-JFK | JFK-NRT | mismatch |
-| UA837 | SFO-HND | SFO-NRT | mismatch |
-| UA838 | HND-SFO | NRT-SFO | mismatch |
-| NH106 | LAX-HND | HND-LAX | mismatch |
-| NH105 | HND-LAX | LAX-HND | mismatch |
+| CX841 | JFK-HKG | JFK-HKG | match |
+| CX840 | HKG-JFK | HKG-JFK | match |
+| CX899 | EWR-HKG | EWR-HKG | match |
+| CX890 | HKG-EWR | HKG-EWR | match |
+| SQ31 | SFO-SIN | SFO-SIN | match |
+| SQ32 | SIN-SFO | SIN-SFO | match |
+| PR104 | MNL-SFO | MNL-SFO | match |
+| PR105 | SFO-MNL | SFO-MNL | match |
+| EK344 | DXB-KUL | DXB-KUL | match |
+| EK343 | KUL-DXB | KUL-DXB | match |
+| CX873 | SFO-HKG | SFO-HKG | match |
+| CX872 | HKG-SFO | HKG-SFO | match |
+| CX881 | LAX-HKG | LAX-HKG | match |
+| CX880 | HKG-LAX | HKG-LAX | match |
+| JL5 | JFK-HND | JFK-HND | match |
+| JL6 | HND-JFK | HND-JFK | match |
+| NH109 | JFK-HND | JFK-HND | match |
+| NH110 | HND-JFK | HND-JFK | match |
+| UA875 | SFO-HND | SFO-HND | match |
+| UA876 | HND-SFO | HND-SFO | match |
+| UA837 | SFO-NRT | SFO-NRT | match |
+| UA838 | NRT-SFO | NRT-SFO | match |
+| NH105 | LAX-HND | LAX-HND | match |
+| NH106 | HND-LAX | HND-LAX | match |
 | UA79 | EWR-NRT | EWR-NRT | match |
 | UA78 | NRT-EWR | NRT-EWR | match |
 | KE82 | JFK-ICN | JFK-ICN | match |
@@ -564,18 +418,59 @@ Every `FLIGHT_LIBRARY` entry was looked up on [adsbdb.com](https://www.adsbdb.co
 | KE11 | ICN-LAX | ICN-LAX | match |
 | KE24 | SFO-ICN | SFO-ICN | match |
 | KE23 | ICN-SFO | ICN-SFO | match |
-| BR12 | LAX-TPE | TPE-LAX | mismatch |
-| BR11 | TPE-LAX | LAX-TPE | mismatch |
-| BR8 | SFO-TPE | TPE-SFO | mismatch |
-| BR7 | TPE-SFO | SFO-TPE | mismatch |
-| MU587 | LAX-PVG | PVG-JFK | mismatch |
-| MU588 | PVG-LAX | JFK-PVG | mismatch |
-| UA857 | SFO-PVG | ICN-PVG | mismatch |
-| UA858 | PVG-SFO | ICN-SFO | mismatch |
+| BR11 | LAX-TPE | LAX-TPE | match |
+| BR12 | TPE-LAX | TPE-LAX | match |
+| BR7 | SFO-TPE | SFO-TPE | match |
+| BR8 | TPE-SFO | TPE-SFO | match |
+| MU578 | LAX-PVG | LAX-PVG | match |
+| MU577 | PVG-LAX | PVG-LAX | match |
 | AA1 | JFK-LAX | JFK-LAX | match |
 | AA2 | LAX-JFK | LAX-JFK | match |
-| UA1 | EWR-SFO | SFO-SIN | mismatch |
-| UA2 | SFO-EWR | SIN-SFO | mismatch |
+| UA19 | JFK-SFO | JFK-SFO | match |
+| UA8 | SFO-JFK | SFO-JFK | match |
 
 </details>
 <!-- LIBRARY-VERIFICATION:END -->
+
+### Library corrections (2026-10-12)
+
+The first audit found 122 of the 223 library flights disagreeing with adsbdb (52 same city pair in the opposite
+direction, 70 a different pair) and 3 not found; 98 matched. The library was corrected so that **every entry now
+matches adsbdb (215 of 215)**, 14 of them additionally confirmed by a live adsb.lol track fixture. Evidence order:
+live ADS-B track fixture, then adsbdb, then general knowledge; where the two direct sources agreed with the
+caller's knowledge (e.g. BA117 = LHR→JFK, BA112 = JFK→LHR, QR7 = DOH→LHR, QR8 = LHR→DOH, LH400 = FRA→JFK,
+JL5 = JFK→HND) the number moved to follow them. There are no `manual` overrides.
+
+* **Swapped** (46 entries / 23 pairs: flight numbers exchanged between the two directions, schedule times stay with the
+  route): EK201/202, EK203/204, EK511/512, AI175/176, UA82/83, MS985/986, BA112/117, BA268/269, BA48/49, LH400/401,
+  LH454/455, IB6250/6251, QR7/8, LA532/533, CX840/841, SQ31/32, EK343/344, CX872/873, CX880/881, JL5/6, NH105/106,
+  BR11/12, BR7/8.
+* **Renumbered** to the adsbdb-confirmed number for the same route (flight numbers found with
+  `scripts/fixtures/find-flights.ts`): PK211→PK213, PK212→PK214, QR608→QR606, TK708→TK719, TK709→TK718,
+  SV706→SV701, SV705→SV700, PK741→PK731, PK742→PK732, SV718→SV707, SV717→SV708, EY201→EY299, EY200→EY298,
+  UA863→UA868, UA862→UA867, EK211→EK223, EK212→EK224, QR735→QR737, QR736→QR738, QR721→QR729, QR722→QR730,
+  EY11→EY101, EY12→EY100, TK33→TK7, TK34→TK8, BA283→BA286 (SFO→LHR), BA286→BA285 (LHR→SFO), UA901→UA918,
+  UA900→UA919, ET500→ET501 (IAD→ADD), DL59→DL156, DL58→DL157, DL57→DL54, DL56→DL55, EK773→EK772 (DXB→CPT),
+  EK774→EK773 (CPT→DXB), AA930→AA951, AA931→AA950, AA950→AA953, AA951→AA954, AV22→AV21, AV21→AV20,
+  LA2465→LA2467, LA2466→LA2468, UA839→UA863 (SFO→SYD), UA840→UA870, EK412→EK414, EK413→EK415, EK247→EK261,
+  EK248→EK262, NZ6→NZ7, NZ5→NZ8, PR102→PR104, PR103→PR105, NH10→NH109, NH9→NH110, MU587→MU578, MU588→MU577,
+  UA837→UA875 (SFO→HND), UA838→UA876 (HND→SFO).
+* **Replaced** by a confirmed flight on the same region / coast: QR727/728 DOH⇄SEA → DOH⇄PHL (live fixtures);
+  AV15/16 LAX⇄BOG → LA535/534 LAX⇄LIM; UA100/101 SFO⇄BNE → QF16/15 LAX⇄BNE; UA1/2 EWR⇄SFO → UA19/8 JFK⇄SFO.
+  **Added**: UA837/838 SFO⇄NRT (adsbdb), CX899/CX890 EWR⇄HKG (polar).
+* **Removed** (no confirmed flight): KQ2/KQ3 JFK⇄NBO (not in adsbdb), ET501 ADD→IAD (no confirmed ADD→US), TK80 SFO→IST
+  (adsbdb: IST-JNB), NZ8/NZ7 JFK⇄AKL, PR126/127 MNL⇄JFK, UA857/858 SFO⇄PVG, AA177/178 DFW⇄HKG.
+* **Re-labelled / times from live tracks**: SQ21/SQ22 EWR⇄SIN are no longer `polar` (live ADS-B 2026-10-11: via Europe,
+  max 54° N, and via Canada, max 63° N); JL5, SQ21, SQ22, MS985, EK216 and NZ8 got the departure/arrival times seen in
+  their live fixtures. Genuinely high-latitude flights keep `polar`: CX840/841 JFK⇄HKG, CX899/890 EWR⇄HKG (great circle
+  ≈ 84° N) and EK225/226 DXB⇄SFO (≈ 88° N); the tests require ≥ 78° N for the `polar` region. adsb.lol has no coverage
+  at these latitudes, so the polar claim rests on the great circle, not on a track.
+* **Not covered** (no confirmed nonstop flight; listed in `tests/flights.test.ts` as `COVERAGE_GAPS`/`ONE_WAY_PAIRS`):
+  US West Coast ⇄ North / East / West / South Africa, US East Coast ⇄ Australia and ⇄ New Zealand, ADD → US,
+  SFO → IST (only IST → SFO).
+
+Each `FLIGHT_LIBRARY` entry carries `verification: { source: 'adsbdb' | 'adsb.lol' | 'manual', checkedAt, note? }`
+(`manual` = documented override of adsbdb and requires a note); `tests/flights.test.ts` cross-checks it against
+`library-verification.json` and the live fixtures. To find a flight number for a route:
+`NODE_USE_ENV_PROXY=1 npx vite-node scripts/fixtures/find-flights.ts EK:DXB:EWR:221 --span 40 [--list]`.
+

@@ -211,7 +211,7 @@ lead; "Agent" = choice made inside a module by a sub-agent and accepted by the l
 |---|---|---|
 | D-D1 | Airports: OurAirports (public domain), large/medium + any with scheduled service and IATA; tz via `tz-lookup` at build time → 5,403 airports, 527 KB JSON | Lead + Agent |
 | D-D2 | Flight library: 223 flights, 14 sample itineraries; schedules **representative** (anchored to the October timetable; other DST periods may shift block time ≈1 h). Lower-confidence flight numbers listed in `flights.ts`; no LHR–KHI flight used (SFO→LHR→DXB→KHI instead) | Agent |
-| D-D3 | Library verified against adsbdb.com: **98 match, 122 mismatch (52 reversed direction, 70 different city pair), 3 not found** — e.g. LH400 is FRA→JFK; live ADS-B confirmed JL5 JFK→HND. Correction in progress: evidence order live ADS-B > adsbdb > knowledge; every entry gets a `verification` record; unconfirmable flight numbers are replaced or removed, never kept | Lead |
+| D-D3 | Library verified against adsbdb.com: **98 match, 122 mismatch (52 reversed direction, 70 different city pair), 3 not found** — e.g. LH400 is FRA→JFK; live ADS-B confirmed JL5 JFK→HND. **Corrected:** evidence order live ADS-B > adsbdb > knowledge → **215/215 match** (201 adsbdb, 14 also confirmed by live adsb.lol tracks, 0 manual): 23 pairs swapped, 60 renumbered, 8 replaced, 12 removed (unconfirmable), 4 added. Coverage gaps with no confirmed nonstop are explicit allow-lists in tests (West Coast ⇄ Africa, East Coast ⇄ Australia/NZ, ADD→US). Polar: CX840/841 JFK⇄HKG, CX899/890 EWR⇄HKG, EK225/226 DXB⇄SFO (great circle ≥ 78°N; adsb.lol has no coverage there). SQ21/22 reclassified from polar (live track via Europe). Sample ids `sfo-ist-khi`→`lax-ist-khi`, `ewr-sin-polar`→`ewr-sin` with aliases for old share links | Lead + Agent H |
 | D-D4 | Itinerary parser: DD/MM for ambiguous numeric dates; IATA codes accepted only in context and only if known; stop-words (THE, AND, CAN, …) never airports; "+1" markers; missing year inferred from weekday + reference date | Agent |
 
 ### 9.6 Online data, backend & AI
@@ -250,6 +250,6 @@ lead; "Agent" = choice made inside a module by a sub-agent and accepted by the l
 
 ### 9.10 Open engineering items (lead)
 * Continuous cruise-altitude cap for short flights (D-R2).
-* Apply library fixes from adsbdb verification (D-D3) — in progress.
+* Teach `verify-library.ts` to read the `verification` field so future manual overrides are reported; add LP/3L airline mappings.
 * Complete the 16 partial live fixtures (`npm run fixtures:live -- --flight …` after landing).
 * Verify live upstream response shapes (AeroDataBox, AeroAPI, OpenSky, adsb.lol, OpenRouter PDF plugin) once keys exist — current worker fixtures are written from documentation.

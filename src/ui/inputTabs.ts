@@ -9,6 +9,7 @@ import { extractItinerary, parseRoute, type HealthResponse } from '../api/client
 import {
   FLIGHT_LIBRARY,
   SAMPLE_ITINERARIES,
+  findSampleItinerary,
   itineraryToLegs,
   libraryFlightToLeg,
   type LibraryFlight,
@@ -330,7 +331,7 @@ function createSamplesPanel(ctx: InputContext): HTMLElement {
       setChildren(msg, 'Pick a valid date first.');
       return;
     }
-    const it = SAMPLE_ITINERARIES.find((s) => s.id === sel.value);
+    const it = findSampleItinerary(sel.value);
     if (!it) return;
     try {
       const legs = itineraryToLegs(it, d, ctx.api.getAirport);
