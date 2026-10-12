@@ -1,15 +1,28 @@
 import type { Env, Handler } from '../env';
 import { HttpError, errorResponse, isIsoDate, json } from '../lib/http';
+import { checkRateLimit } from '../lib/ratelimit';
 import { callAnthropic } from '../providers/anthropic';
-import { IMAGE_TYPES, type LlmInput, type LlmRaw, type MediaType, type ProviderName } from '../providers/llm';
+import { IMAGE_TYPES, sanitizeFileName, type LlmFile, type LlmInput, type LlmRaw, type MediaType, type ProviderName } from '../providers/llm';
 import { callOpenAI } from '../providers/openai';
 import { callOpenRouter } from '../providers/openrouter';
 import { normalizeLegs, normalizeWarnings, normalizeWaypoints, topLevel, type Task } from '../schema';
 
+/** Per attachment (decoded). */
 export const MAX_DECODED_BYTES = 8 * 1024 * 1024;
+/** Attachments per request, and all of them together (decoded). */
+export const MAX_IMAGES = 10;
+export const MAX_TOTAL_DECODED_BYTES = 20 * 1024 * 1024;
 export const MAX_TEXT_CHARS = 50_000;
-/** 8 MB of base64 is ~10.7 MB; leave headroom for the JSON envelope. */
+/** 8 MB of base64 is ~10.7 MB; leave headroom for the JSON envelope. Used for text / single-image / route bodies. */
 const MAX_BODY_BYTES = 11 * 1024 * 1024;
+/** 20 MB decoded is ~26.7 MB of base64, plus the JSON envelope and per-item overhead. */
+export const MAX_MULTI_BODY_BYTES = 28 * 1024 * 1024;
+
+/**
+ * Rate-limit weight of an extract request with `n` attachments: one unit per started group of three
+ * (1-3 images = 1, 4-6 = 2, 7-9 = 3, 10 = 4). The router charges the first unit; the handler charges the rest.
+ */
+export const extractWeight = (n: number): number => Math.max(1, Math.ceil(n / 3));
 const PROVIDERS: ProviderName[] = ['openrouter', 'anthropic', 'openai'];
 
 const configured = (env: Env, p: ProviderName): boolean =>
@@ -49,11 +62,11 @@ function signatureMatches(b64: string, mediaType: MediaType): boolean {
   }
 }
 
-async function readJsonBody(req: Request): Promise<Record<string, unknown>> {
+async function readJsonBody(req: Request, maxBytes = MAX_BODY_BYTES): Promise<Record<string, unknown>> {
   const len = Number(req.headers.get('Content-Length') ?? '0');
-  if (len > MAX_BODY_BYTES) throw new HttpError(413, 'Request body too large.');
+  if (len > maxBytes) throw new HttpError(413, 'Request body too large.');
   const raw = await req.text();
-  if (raw.length > MAX_BODY_BYTES) throw new HttpError(413, 'Request body too large.');
+  if (raw.length > maxBytes) throw new HttpError(413, 'Request body too large.');
   let body: unknown;
   try {
     body = JSON.parse(raw);
@@ -96,27 +109,59 @@ function parseText(body: Record<string, unknown>): string {
   return body.text;
 }
 
+interface Attachment extends LlmFile {
+  decodedBytes: number;
+}
+
+/** Validate one base64 attachment. `what` prefixes error messages ("File" or "Attachment 2"). */
+function parseAttachment(item: { image: unknown; mediaType: unknown }, what: string): Attachment {
+  const { mediaType } = item;
+  if (typeof mediaType !== 'string' || ![...IMAGE_TYPES, 'application/pdf'].includes(mediaType)) {
+    throw new HttpError(400, `${what === 'File' ? '' : `${what}: `}"mediaType" must be image/jpeg, image/png, image/webp, image/gif or application/pdf.`);
+  }
+  if (typeof item.image !== 'string' || !item.image) throw new HttpError(400, `${what === 'File' ? '' : `${what}: `}"image" must be a base64 string.`);
+  const b64 = item.image.replace(/^data:[^,]*;base64,/, '');
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) throw new HttpError(400, `${what === 'File' ? '' : `${what}: `}"image" is not valid base64.`);
+  const padding = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
+  const decodedBytes = Math.floor((b64.length * 3) / 4) - padding;
+  if (decodedBytes > MAX_DECODED_BYTES) throw new HttpError(413, `${what} too large (max 8 MB).`);
+  if (!signatureMatches(b64, mediaType as MediaType)) throw new HttpError(400, `${what} content does not match "mediaType".`);
+  return { mediaType: mediaType as MediaType, data: b64, decodedBytes };
+}
+
+function parseImages(images: unknown): LlmFile[] {
+  if (!Array.isArray(images) || images.length === 0) throw new HttpError(400, '"images" must be a non-empty array.');
+  if (images.length > MAX_IMAGES) throw new HttpError(413, `Too many attachments (max ${MAX_IMAGES}).`);
+  let total = 0;
+  const files: LlmFile[] = [];
+  images.forEach((raw, i) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new HttpError(400, `Attachment ${i + 1} must be an object with "image" and "mediaType".`);
+    const item = raw as Record<string, unknown>;
+    if (item.name != null && typeof item.name !== 'string') throw new HttpError(400, `Attachment ${i + 1}: "name" must be a string.`);
+    const att = parseAttachment({ image: item.image, mediaType: item.mediaType }, `Attachment ${i + 1}`);
+    total += att.decodedBytes;
+    if (total > MAX_TOTAL_DECODED_BYTES) throw new HttpError(413, 'The attachments are too large together (max 20 MB in total).');
+    const name = sanitizeFileName(item.name);
+    files.push({ mediaType: att.mediaType, data: att.data, ...(name ? { name } : {}) });
+  });
+  return files;
+}
+
+/**
+ * Accepts exactly one of: `{ text }`, `{ image, mediaType }` (single file, original shape) or
+ * `{ images: [{ image, mediaType, name? }, ...] }` (1-10 attachments of ONE itinerary, sent together).
+ */
 export function parseExtractBody(body: Record<string, unknown>): Parsed {
   const common = parseCommon(body);
-  const hasImage = body.image != null;
-  const hasText = body.text != null;
-  if (hasImage && hasText) throw new HttpError(400, 'Send either "image" or "text", not both.');
-  if (!hasImage && !hasText) throw new HttpError(400, 'Provide "image" (base64) with "mediaType", or "text".');
+  const given = (['image', 'images', 'text'] as const).filter((k) => body[k] != null);
+  if (given.length > 1) throw new HttpError(400, 'Send only one of "image", "images" or "text".');
+  if (given.length === 0) throw new HttpError(400, 'Provide "images" (base64 files), "image" (base64) with "mediaType", or "text".');
   const base = { task: 'itinerary' as const, referenceDate: common.referenceDate, model: common.model };
-  if (hasText) return { input: { ...base, text: parseText(body) }, provider: common.provider };
+  if (given[0] === 'text') return { input: { ...base, text: parseText(body) }, provider: common.provider };
+  if (given[0] === 'images') return { input: { ...base, files: parseImages(body.images), labelled: true }, provider: common.provider };
 
-  const mediaType = body.mediaType;
-  if (typeof mediaType !== 'string' || ![...IMAGE_TYPES, 'application/pdf'].includes(mediaType)) {
-    throw new HttpError(400, '"mediaType" must be image/jpeg, image/png, image/webp, image/gif or application/pdf.');
-  }
-  if (typeof body.image !== 'string' || !body.image) throw new HttpError(400, '"image" must be a base64 string.');
-  const b64 = body.image.replace(/^data:[^,]*;base64,/, '');
-  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) throw new HttpError(400, '"image" is not valid base64.');
-  const padding = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
-  const decoded = Math.floor((b64.length * 3) / 4) - padding;
-  if (decoded > MAX_DECODED_BYTES) throw new HttpError(413, 'File too large (max 8 MB).');
-  if (!signatureMatches(b64, mediaType as MediaType)) throw new HttpError(400, 'File content does not match "mediaType".');
-  return { input: { ...base, file: { mediaType: mediaType as MediaType, data: b64 } }, provider: common.provider };
+  const att = parseAttachment({ image: body.image, mediaType: body.mediaType }, 'File');
+  return { input: { ...base, files: [{ mediaType: att.mediaType, data: att.data }] }, provider: common.provider };
 }
 
 async function runLlm(env: Env, input: LlmInput, requested?: ProviderName): Promise<LlmRaw> {
@@ -140,8 +185,12 @@ function shape(raw: LlmRaw, task: Task) {
 
 export const extractItinerary: Handler = async (req, env) => {
   try {
-    const body = await readJsonBody(req);
+    const body = await readJsonBody(req, MAX_MULTI_BODY_BYTES);
     const { input, provider } = parseExtractBody(body);
+    // The router already charged one unit; bigger requests (more images = more tokens) pay the rest.
+    for (let i = 1; i < extractWeight(input.files?.length ?? 1); i++) {
+      if (!(await checkRateLimit(req, env, 'extract'))) throw new HttpError(429, 'Too many requests. Please slow down.');
+    }
     const raw = await runLlm(env, input, provider);
     return json(shape(raw, 'itinerary'));
   } catch (e) {

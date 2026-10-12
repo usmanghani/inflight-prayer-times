@@ -3,7 +3,7 @@ import { DEFAULT_OPENROUTER_ALLOWED, DEFAULT_OPENROUTER_MODEL, type Env } from '
 import { HttpError } from '../lib/http';
 import { buildPrompt } from '../prompts';
 import { schemaFor } from '../schema';
-import { PROVIDER_TIMEOUT_MS, type LlmInput, type LlmRaw } from './llm';
+import { PROVIDER_TIMEOUT_MS, attachmentLabel, pdfFileName, type LlmInput, type LlmRaw } from './llm';
 
 const URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -57,21 +57,21 @@ function jsonSchemaFor(task: LlmInput['task']): Record<string, unknown> {
 
 export async function callOpenRouter(env: Env, input: LlmInput): Promise<LlmRaw> {
   const model = resolveOpenRouterModel(env, input.model);
-  const prompt = buildPrompt(input.task, input.referenceDate, input.text);
+  const files = input.files ?? [];
+  const prompt = buildPrompt(input.task, input.referenceDate, input.text, files.length || 1);
 
+  // Instruction first, then every attachment in order, each preceded by its label (multi-attachment requests).
   const content: unknown[] = [{ type: 'text', text: prompt }];
-  let isPdf = false;
-  if (input.file) {
-    if (input.file.mediaType === 'application/pdf') {
-      isPdf = true;
-      content.push({
-        type: 'file',
-        file: { filename: 'itinerary.pdf', file_data: `data:application/pdf;base64,${input.file.data}` },
-      });
+  let hasPdf = false;
+  files.forEach((f, i) => {
+    if (input.labelled) content.push({ type: 'text', text: attachmentLabel(i, files.length, f.name) });
+    if (f.mediaType === 'application/pdf') {
+      hasPdf = true;
+      content.push({ type: 'file', file: { filename: pdfFileName(f, i, input.labelled), file_data: `data:application/pdf;base64,${f.data}` } });
     } else {
-      content.push({ type: 'image_url', image_url: { url: `data:${input.file.mediaType};base64,${input.file.data}` } });
+      content.push({ type: 'image_url', image_url: { url: `data:${f.mediaType};base64,${f.data}` } });
     }
-  }
+  });
 
   const body: Record<string, unknown> = {
     model,
@@ -84,7 +84,7 @@ export async function callOpenRouter(env: Env, input: LlmInput): Promise<LlmRaw>
     temperature: 0,
     max_tokens: 4000,
   };
-  if (isPdf) body.plugins = [{ id: 'file-parser', pdf: { engine: 'pdf-text' } }];
+  if (hasPdf) body.plugins = [{ id: 'file-parser', pdf: { engine: 'pdf-text' } }];
 
   let res: Response;
   try {

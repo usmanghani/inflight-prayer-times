@@ -616,9 +616,11 @@ function mergeDuplicates<T extends ParsedLeg>(legs: T[]): T[] {
 
 // ───────────────────────────── entry point ─────────────────────────────
 
-export function parseItineraryText(text: string, opts: ParseOptions): ParsedLeg[] {
-  if (!text || !text.trim()) return [];
+export function parseItineraryText(rawText: string, opts: ParseOptions): ParsedLeg[] {
+  if (!rawText || !rawText.trim()) return [];
   const ref = opts.referenceDate ?? new Date();
+  // Page separators ("--- Photo 2: Screenshot 2026-10-12.png ---") carry file names that may look like dates/times.
+  const text = stripPageSeparators(rawText);
   const src = normalize(text);
 
   const { hits: dates, masked: afterDates } = findDates(src, ref);
@@ -684,4 +686,108 @@ export function parseItineraryText(text: string, opts: ParseOptions): ParsedLeg[
     const leg: ParsedLeg = { ...rest, confidence: scoreLeg(l, inherited.has(l)) };
     return leg;
   });
+}
+
+
+// ───────────────────────────── multi-source (several photos / pages) ─────────────────────────────
+
+/**
+ * Separator line placed between the OCR text of consecutive attachments:
+ * `--- Photo 2: ticket.jpg ---`. The parser ignores these lines (file names can look like dates).
+ */
+const PAGE_SEPARATOR_LINE = /^[ \t]*---[ \t]*(?:Photo|Page|Attachment)[ \t]+\d+(?::[^\n]*?)?[ \t]*---[ \t]*$/gm;
+
+/** Remove page-separator lines (keeps the line breaks so positions stay roughly aligned). */
+export function stripPageSeparators(text: string): string {
+  return text.replace(PAGE_SEPARATOR_LINE, '');
+}
+
+/** One-line, markup-free separator for the page at 1-based `position`; the name is optional and sanitised. */
+export function pageSeparator(position: number, name?: string): string {
+  const clean = (name ?? '').replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/---+/g, '-').trim().slice(0, 80);
+  return clean ? `--- Photo ${position}: ${clean} ---` : `--- Photo ${position} ---`;
+}
+
+const LEG_FIELDS = ['flightNumber', 'from', 'to', 'depDate', 'depTime', 'arrDate', 'arrTime'] as const;
+
+/** How many of the identifying fields a leg has (used to keep the most complete duplicate). */
+function completeness(l: ParsedLeg): number {
+  return LEG_FIELDS.reduce((n, k) => n + (l[k] ? 1 : 0), 0);
+}
+
+const conflict = (a: string | undefined, b: string | undefined): boolean => !!a && !!b && a !== b;
+
+/**
+ * Do two parsed legs describe the same flight (seen on different photos)?
+ *  - same flight number on a non-conflicting date / time / origin, or
+ *  - same origin + destination + departure time on a non-conflicting date
+ *    (also when one copy lacks the flight number, or OCR garbled it).
+ */
+export function isSameLeg(a: ParsedLeg, b: ParsedLeg): boolean {
+  if (conflict(a.depDate, b.depDate) || conflict(a.depTime, b.depTime) || conflict(a.from, b.from)) return false;
+  if (a.flightNumber && a.flightNumber === b.flightNumber) return true;
+  return !!(a.from && a.to && a.depTime && a.from === b.from && a.to === b.to && a.depTime === b.depTime);
+}
+
+/** The more complete copy wins (ties: higher confidence, then the earlier one); gaps are filled from the other. */
+function mergeTwins(a: ParsedLeg, b: ParsedLeg): ParsedLeg {
+  const [best, other] =
+    completeness(b) > completeness(a) || (completeness(b) === completeness(a) && b.confidence > a.confidence) ? [b, a] : [a, b];
+  const out: ParsedLeg = { ...best, raw: [...best.raw, ...other.raw.filter((r) => !best.raw.includes(r))] };
+  for (const k of LEG_FIELDS) {
+    if (!out[k] && other[k]) out[k] = other[k];
+  }
+  out.confidence = Math.max(a.confidence, b.confidence);
+  return out;
+}
+
+/** Remove legs that appear more than once, keeping the most complete copy at the first one's place. */
+export function dedupeLegs(legs: ParsedLeg[]): ParsedLeg[] {
+  const out: ParsedLeg[] = [];
+  for (const l of legs) {
+    const i = out.findIndex((o) => isSameLeg(o, l));
+    if (i < 0) out.push({ ...l, raw: [...l.raw] });
+    else out[i] = mergeTwins(out[i]!, l);
+  }
+  return out;
+}
+
+/**
+ * Order by departure date/time where known (local clock; ties and unknowns keep attachment order).
+ * A leg without a date sorts right after the nearest earlier dated leg (or before the first dated one).
+ */
+export function sortLegsByDeparture(legs: ParsedLeg[]): ParsedLeg[] {
+  const keyOf = (l: ParsedLeg): string | undefined => (l.depDate ? `${l.depDate}T${l.depTime ?? '00:00'}` : undefined);
+  const keys: (string | undefined)[] = legs.map(keyOf);
+  let prev: string | undefined;
+  for (let i = 0; i < keys.length; i++) {
+    if (keys[i]) prev = keys[i];
+    else keys[i] = prev;
+  }
+  let next: string | undefined;
+  for (let i = keys.length - 1; i >= 0; i--) {
+    if (keyOf(legs[i]!)) next = keys[i];
+    else if (!keys[i]) keys[i] = next;
+  }
+  return legs
+    .map((leg, idx) => ({ leg, idx, key: keys[idx] }))
+    .sort((a, b) => (a.key && b.key && a.key !== b.key ? (a.key < b.key ? -1 : 1) : a.idx - b.idx))
+    .map((x) => x.leg);
+}
+
+/**
+ * Combine the legs read from several sources (one array per photo/page, in attachment order):
+ * duplicates are merged and the result is ordered by departure.
+ */
+export function mergeParsedLegs(legsPerSource: ParsedLeg[][]): ParsedLeg[] {
+  return sortLegsByDeparture(dedupeLegs(legsPerSource.flat()));
+}
+
+/**
+ * Parse the text of several pages together (so a leg that is split across two screenshots still
+ * joins), then merge duplicates that appear on several pages and order by departure.
+ */
+export function parseItineraryPages(pages: string[], opts: ParseOptions): ParsedLeg[] {
+  const text = pages.filter((p) => p && p.trim()).join('\n\n');
+  return mergeParsedLegs([parseItineraryText(text, opts)]);
 }

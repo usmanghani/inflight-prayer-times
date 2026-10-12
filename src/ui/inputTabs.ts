@@ -4,8 +4,8 @@ import { h, setChildren, uid, todayIso, clear } from './dom';
 import { type LegDraft, legToDraft } from './model';
 import { parsedToDrafts, type ParsedLike } from './parsed';
 import { createTabs, type TabsHandle } from './tabs';
-import { recognizeImage } from '../ocr/ocr';
-import { extractItinerary, parseRoute, type HealthResponse } from '../api/client';
+import { createPhotoPanel } from './photoPanel';
+import { parseRoute, type HealthResponse } from '../api/client';
 import {
   FLIGHT_LIBRARY,
   SAMPLE_ITINERARIES,
@@ -28,196 +28,13 @@ export interface InputTabs {
   el: HTMLElement;
   tabs: TabsHandle;
   setBackend(health: HealthResponse | null): void;
+  /** Release object URLs, listeners and any reading in progress. */
+  dispose(): void;
 }
 
 async function parseLocal(text: string, api: AirportApi): Promise<ParsedLike[]> {
   const { parseItineraryText } = await import('../ocr/parseItinerary');
   return parseItineraryText(text, { isKnownIata: (c) => !!api.getAirport(c), referenceDate: new Date() });
-}
-
-const AI_LABEL = 'Read with AI (DeepSeek V4.1 Flash via your backend — image is sent to the server)';
-const AI_TEXT_LABEL = 'AI on extracted text only (cheaper: the photo stays on this device; only the recognised text is sent)';
-
-type ReadMode = 'ocr' | 'ai-text' | 'ai-image';
-
-// ───────────────────────────── photo tab ─────────────────────────────
-
-function createPhotoPanel(ctx: InputContext): { el: HTMLElement; setBackend(hh: HealthResponse | null): void } {
-  let previewUrl: string | null = null;
-  let mode: ReadMode = 'ocr';
-  let busy = false;
-
-  const fileId = uid('photo');
-  const fileInput = h('input', { id: fileId, type: 'file', accept: 'image/*,application/pdf', class: 'visually-hidden' });
-  const camId = uid('cam');
-  const camInput = h('input', { id: camId, type: 'file', accept: 'image/*,application/pdf', capture: 'environment', class: 'visually-hidden' });
-  const preview = h('div', { class: 'preview', hidden: true });
-  const progressLabel = h('div', { class: 'progress-label', role: 'status', 'aria-live': 'polite' });
-  const progress = h('progress', { class: 'progress', max: 1, value: 0, hidden: true, 'aria-label': 'Reading progress' });
-  const ocrBox = h('div', { class: 'ocr-box', hidden: true });
-  const aiBox = h('fieldset', { class: 'ai-modes', hidden: true });
-
-  const drop = h(
-    'div',
-    { class: 'dropzone', tabindex: 0, role: 'button', 'aria-label': 'Choose or drop an itinerary photo or PDF' },
-    h('p', { class: 'drop-title' }, 'Drop a screenshot, photo or PDF of your itinerary here'),
-    h('p', { class: 'hint' }, 'It is read on this device with OCR; the image is not uploaded anywhere.'),
-    h(
-      'div',
-      { class: 'row center wrap' },
-      h('label', { class: 'btn primary', for: fileId }, 'Choose a file'),
-      h('label', { class: 'btn cam-btn', for: camId }, 'Take a photo'),
-    ),
-  );
-  drop.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      fileInput.click();
-    }
-  });
-  for (const ev of ['dragenter', 'dragover'] as const) {
-    drop.addEventListener(ev, (e) => {
-      e.preventDefault();
-      drop.classList.add('over');
-    });
-  }
-  for (const ev of ['dragleave', 'drop'] as const) {
-    drop.addEventListener(ev, () => drop.classList.remove('over'));
-  }
-  drop.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const f = (e as DragEvent).dataTransfer?.files?.[0];
-    if (f) void handleFile(f);
-  });
-  for (const inp of [fileInput, camInput]) {
-    inp.addEventListener('change', () => {
-      const f = inp.files?.[0];
-      if (f) void handleFile(f);
-      inp.value = '';
-    });
-  }
-
-  function setProgress(status: string, value: number | null): void {
-    progress.hidden = value === null;
-    if (value !== null) progress.value = Math.max(0, Math.min(1, value));
-    setChildren(progressLabel, status);
-  }
-
-  function showPreview(file: File): void {
-    if (previewUrl && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(previewUrl);
-    previewUrl = null;
-    clear(preview);
-    if (file.type.startsWith('image/') && typeof URL.createObjectURL === 'function') {
-      previewUrl = URL.createObjectURL(file);
-      preview.hidden = false;
-      preview.appendChild(h('img', { src: previewUrl, alt: 'Preview of the itinerary image you chose', class: 'preview-img' }));
-    } else {
-      preview.hidden = false;
-      preview.appendChild(h('p', { class: 'hint' }, `Selected file: ${file.name.slice(0, 80)} (${Math.round(file.size / 1024)} kB)`));
-    }
-  }
-
-  function deliver(parsed: ParsedLike[], source: string): void {
-    if (parsed.length === 0) {
-      setProgress(`${source}: no flights were recognised. You can edit the text below and read it again, or enter the legs by hand.`, null);
-      ctx.announce('No flights recognised.');
-      return;
-    }
-    const drafts = parsedToDrafts(parsed, ctx.api.getAirport);
-    setProgress(`${source}: found ${drafts.length} flight${drafts.length === 1 ? '' : 's'}. Review them in "Your flights" and press Calculate.`, null);
-    ctx.setLegs(drafts, { review: true, message: `Read from your photo (${source}). Check every airport, date and time.` });
-    ctx.announce(`Found ${drafts.length} flights. Please review them.`);
-  }
-
-  function showOcrText(text: string): void {
-    ocrBox.hidden = false;
-    const ta = h('textarea', { rows: 6, class: 'mono', 'aria-label': 'Recognised text (editable)', spellcheck: 'false' });
-    ta.value = text;
-    setChildren(
-      ocrBox,
-      h('label', null, 'Recognised text (you can fix it and read it again)'),
-      ta,
-      h('div', { class: 'row' },
-        h('button', { type: 'button', class: 'btn small', onClick: () => void (async () => {
-          deliver(await parseLocal(ta.value, ctx.api), 'Recognised text');
-        })() }, 'Read this text again'),
-      ),
-    );
-  }
-
-  async function handleFile(file: File): Promise<void> {
-    if (busy) return;
-    busy = true;
-    showPreview(file);
-    ocrBox.hidden = true;
-    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
-    try {
-      if (mode === 'ai-image') {
-        setProgress('Sending the image to your backend for AI reading…', null);
-        progress.hidden = false;
-        progress.removeAttribute('value'); // indeterminate
-        const res = await extractItinerary(file, { referenceDate: todayIso() });
-        deliver(res.legs, `AI (${res.model})`);
-        if (res.warnings.length) setChildren(progressLabel, progressLabel.textContent ?? '', ` Warnings: ${res.warnings.join(' ')}`);
-        return;
-      }
-      if (isPdf) {
-        setProgress(
-          'On-device reading of PDFs is not available. Take a screenshot of the page (or paste its text), or enable AI reading if your backend offers it.',
-          null,
-        );
-        return;
-      }
-      setProgress('Starting the on-device OCR engine (the first run downloads its language data)…', 0);
-      const text = await recognizeImage(file, (p) => {
-        const pct = Math.round(Math.max(0, Math.min(1, p.progress)) * 100);
-        setProgress(`${p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Reading'}… ${pct}%`, p.progress);
-      });
-      showOcrText(text);
-      if (mode === 'ai-text') {
-        setProgress('Sending the recognised text (not the image) to your backend…', null);
-        progress.hidden = false;
-        progress.removeAttribute('value');
-        try {
-          const res = await extractItinerary({ text }, { referenceDate: todayIso() });
-          deliver(res.legs, `AI on text (${res.model})`);
-          return;
-        } catch (e) {
-          setProgress(`AI reading failed (${e instanceof Error ? e.message : 'error'}); using the on-device parser instead.`, null);
-        }
-      }
-      deliver(await parseLocal(text, ctx.api), 'On-device OCR');
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'unknown error';
-      setProgress(`Could not read the image: ${msg}. If you are offline, the OCR engine could not download its language data. You can paste the text or enter the legs by hand.`, null);
-      ctx.announce('Reading the image failed.');
-    } finally {
-      busy = false;
-    }
-  }
-
-  const modeName = uid('mode');
-  function radio(value: ReadMode, label: string, checked: boolean): HTMLElement {
-    const id = uid('rm');
-    const input = h('input', { type: 'radio', name: modeName, id, value, checked });
-    input.addEventListener('change', () => {
-      if (input.checked) mode = value;
-    });
-    return h('div', { class: 'check' }, input, h('label', { for: id }, label));
-  }
-  const ocrOnly = radio('ocr', 'On this device only (private, default)', true);
-  const aiText = radio('ai-text', AI_TEXT_LABEL, false);
-  const aiImage = radio('ai-image', AI_LABEL, false);
-  setChildren(aiBox, h('legend', null, 'How should it be read?'), ocrOnly, aiText, aiImage);
-
-  const el = h('div', { class: 'photo-panel' }, drop, fileInput, camInput, aiBox, preview, progress, progressLabel, ocrBox);
-  return {
-    el,
-    setBackend(health) {
-      aiBox.hidden = !health || !health.ok;
-      if (aiBox.hidden) mode = 'ocr';
-    },
-  };
 }
 
 // ───────────────────────────── paste tab ─────────────────────────────
@@ -460,6 +277,9 @@ export function createInputTabs(ctx: InputContext): InputTabs {
     setBackend(health) {
       photo.setBackend(health);
       paste.setBackend(health);
+    },
+    dispose() {
+      photo.dispose();
     },
   };
 }

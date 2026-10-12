@@ -297,6 +297,7 @@ export async function mountApp(root: HTMLElement, opts: MountOptions = {}): Prom
       await pending;
     },
     dispose() {
+      inputs.dispose();
       rendered?.dispose();
       client.dispose();
     },

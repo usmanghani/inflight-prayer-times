@@ -4,7 +4,7 @@ import { DEFAULT_CLAUDE_MODEL, type Env } from '../env';
 import { HttpError } from '../lib/http';
 import { buildPrompt } from '../prompts';
 import { schemaFor } from '../schema';
-import { PROVIDER_TIMEOUT_MS, type LlmInput, type LlmRaw } from './llm';
+import { PROVIDER_TIMEOUT_MS, attachmentLabel, type LlmInput, type LlmRaw } from './llm';
 
 /** Indirection so tests can inject a fake client. */
 export const anthropicDeps = {
@@ -22,17 +22,19 @@ export function mapAnthropicError(e: unknown): HttpError {
 export async function callAnthropic(env: Env, input: LlmInput): Promise<LlmRaw> {
   const client = anthropicDeps.createClient(env.ANTHROPIC_API_KEY ?? '');
   const model = env.CLAUDE_MODEL || DEFAULT_CLAUDE_MODEL;
-  const prompt = buildPrompt(input.task, input.referenceDate, input.text);
+  const files = input.files ?? [];
+  const prompt = buildPrompt(input.task, input.referenceDate, input.text, files.length || 1);
 
-  // Image / document block must come BEFORE the text block.
+  // Image / document blocks (each preceded by its label when several are sent) come BEFORE the instruction text block.
   const content: Anthropic.Beta.BetaContentBlockParam[] = [];
-  if (input.file) {
-    if (input.file.mediaType === 'application/pdf') {
-      content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: input.file.data } });
+  files.forEach((f, i) => {
+    if (input.labelled) content.push({ type: 'text', text: attachmentLabel(i, files.length, f.name) });
+    if (f.mediaType === 'application/pdf') {
+      content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: f.data } });
     } else {
-      content.push({ type: 'image', source: { type: 'base64', media_type: input.file.mediaType, data: input.file.data } });
+      content.push({ type: 'image', source: { type: 'base64', media_type: f.mediaType, data: f.data } });
     }
-  }
+  });
   content.push({ type: 'text', text: prompt });
 
   try {

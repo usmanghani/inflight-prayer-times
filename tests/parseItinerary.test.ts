@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { parseItineraryText, type ParsedLeg } from '../src/ocr/parseItinerary';
+import {
+  mergeParsedLegs,
+  pageSeparator,
+  parseItineraryPages,
+  parseItineraryText,
+  stripPageSeparators,
+  type ParsedLeg,
+} from '../src/ocr/parseItinerary';
 import { isKnownIata } from '../src/data/airports';
 
 const referenceDate = new Date(Date.UTC(2026, 9, 1));
@@ -225,5 +232,113 @@ Boarding 02:15   Check-in closes 01:15   Duration 2h 25m
   it('flight numbers: EK 601, QR605, PK 301, UA 863, 9W 123, 6E 2001', () => {
     const legs = parse('EK 601\nQR605\nPK 301\nUA 863\n9W 123\n6E 2001');
     expect(legs.map((l) => l.flightNumber)).toEqual(['EK601', 'QR605', 'PK301', 'UA863', '9W123', '6E2001']);
+  });
+});
+
+describe('multi-page itineraries', () => {
+  const opts = { isKnownIata, referenceDate };
+  const page1 = `
+E-TICKET ITINERARY RECEIPT   Page 1 of 2
+Passenger: KHAN/USMAN MR
+Flight EK 601   Economy (Y)   Operated by Emirates
+Departure: Mon 12 Oct 2026  02:55   Karachi (KHI)  Terminal 1
+Arrival:   Mon 12 Oct 2026  04:20   Dubai (DXB)  Terminal 3
+`;
+  const page2 = `
+E-TICKET ITINERARY RECEIPT   Page 2 of 2
+Flight EK 225   Economy (Y)   Operated by Emirates
+Departure: Mon 12 Oct 2026  09:55   Dubai (DXB)  Terminal 3
+Arrival:   Mon 12 Oct 2026  15:05   San Francisco (SFO)  Terminal I
+`;
+
+  it('2-page e-ticket: leg 1 on page 1, leg 2 on page 2', () => {
+    const legs = parseItineraryPages([page1, page2], opts);
+    expect(legs.map((l) => l.flightNumber)).toEqual(['EK601', 'EK225']);
+    expect(legs[0]).toMatchObject({ from: 'KHI', to: 'DXB', depDate: '2026-10-12', depTime: '02:55', arrTime: '04:20' });
+    expect(legs[1]).toMatchObject({ from: 'DXB', to: 'SFO', depTime: '09:55', arrTime: '15:05' });
+  });
+
+  it('page separators (with date-like file names) are ignored by the parser', () => {
+    const text = [
+      pageSeparator(1, 'Screenshot 2026-11-30 at 10.31.22 PM.png'),
+      page1,
+      pageSeparator(2, 'IMG_2031 08:15.jpg'),
+      page2,
+    ].join('\n');
+    expect(pageSeparator(2, 'a\nb---c.png')).toBe('--- Photo 2: a b-c.png ---');
+    expect(stripPageSeparators(text)).not.toContain('Screenshot');
+    const legs = parseItineraryPages([text], opts);
+    expect(legs.map((l) => l.flightNumber)).toEqual(['EK601', 'EK225']);
+    expect(legs[0].depDate).toBe('2026-10-12');
+    expect(legs[1].depTime).toBe('09:55');
+  });
+
+  it('a leg split across the page boundary still parses from the combined text', () => {
+    const a = 'Flight EK 225   Economy\nDeparture: Mon 12 Oct 2026  09:55   Dubai (DXB)  Terminal 3\n';
+    const b = 'Arrival:   Mon 12 Oct 2026  15:05   San Francisco (SFO)  Terminal I\nBaggage: 2 pieces\n';
+    const legs = parseItineraryPages([a, b], opts);
+    expect(legs).toHaveLength(1);
+    expect(legs[0]).toMatchObject({ flightNumber: 'EK225', from: 'DXB', to: 'SFO', depDate: '2026-10-12', depTime: '09:55', arrTime: '15:05' });
+    // each half alone is incomplete
+    expect(parseItineraryText(a, opts)[0].arrTime).toBeUndefined();
+  });
+
+  it('the same leg on two screenshots is deduplicated (text path)', () => {
+    const legs = parseItineraryPages([page1, page2, page1], opts);
+    expect(legs.map((l) => l.flightNumber)).toEqual(['EK601', 'EK225']);
+  });
+
+  it('mergeParsedLegs: same flight + date on two photos keeps the more complete copy and fills gaps', () => {
+    const sparse: ParsedLeg = { flightNumber: 'EK601', from: 'KHI', depDate: '2026-10-12', confidence: 0.6, raw: ['EK 601 KHI 12 Oct'] };
+    const full: ParsedLeg = {
+      flightNumber: 'EK601', from: 'KHI', to: 'DXB', depDate: '2026-10-12', depTime: '02:55', arrDate: '2026-10-12', arrTime: '04:20',
+      confidence: 0.95, raw: ['Flight EK 601 02:55 04:20'],
+    };
+    const other: ParsedLeg = { flightNumber: 'EK225', from: 'DXB', to: 'SFO', depDate: '2026-10-12', depTime: '09:55', arrTime: '15:05', confidence: 0.9, raw: ['EK 225'] };
+    for (const input of [[[sparse], [other], [full]], [[full], [other], [sparse]]]) {
+      const out = mergeParsedLegs(input);
+      expect(out).toHaveLength(2);
+      expect(out[0]).toMatchObject({ flightNumber: 'EK601', to: 'DXB', depTime: '02:55', arrTime: '04:20', confidence: 0.95 });
+      expect(out[0].raw).toHaveLength(2);
+      expect(out[1].flightNumber).toBe('EK225');
+    }
+    // inputs are not mutated
+    expect(sparse.to).toBeUndefined();
+    expect(sparse.raw).toHaveLength(1);
+  });
+
+  it('mergeParsedLegs: same from/to + departure time dedupes even without (or with a garbled) flight number', () => {
+    const a: ParsedLeg = { from: 'KHI', to: 'DXB', depDate: '2026-10-12', depTime: '02:55', confidence: 0.55, raw: ['KHI DXB 02:55'] };
+    const b: ParsedLeg = { flightNumber: 'EK601', from: 'KHI', to: 'DXB', depTime: '02:55', arrTime: '04:20', confidence: 0.8, raw: ['EK 601'] };
+    const c: ParsedLeg = { flightNumber: 'EK607', from: 'KHI', to: 'DXB', depDate: '2026-10-12', depTime: '02:55', confidence: 0.4, raw: ['EK 6O7'] };
+    const out = mergeParsedLegs([[a], [b], [c]]);
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ flightNumber: 'EK601', from: 'KHI', to: 'DXB', depDate: '2026-10-12', depTime: '02:55', arrTime: '04:20' });
+  });
+
+  it('mergeParsedLegs: the same flight number on a different date is a different leg', () => {
+    const mk = (d: string): ParsedLeg => ({ flightNumber: 'EK601', from: 'KHI', to: 'DXB', depDate: d, depTime: '02:55', confidence: 0.9, raw: [] });
+    expect(mergeParsedLegs([[mk('2026-10-12')], [mk('2026-10-19')]]).map((l) => l.depDate)).toEqual(['2026-10-12', '2026-10-19']);
+  });
+
+  it('mergeParsedLegs orders by departure date/time; undated legs keep attachment order', () => {
+    const mk = (fn: string, d?: string, t?: string): ParsedLeg => ({ flightNumber: fn, from: 'AAA', depDate: d, depTime: t, confidence: 0.9, raw: [] });
+    // photos attached out of order
+    const out = mergeParsedLegs([[mk('B2', '2026-10-13', '08:00')], [mk('A1', '2026-10-12', '23:30')], [mk('A0', '2026-10-12', '09:00')]]);
+    expect(out.map((l) => l.flightNumber)).toEqual(['A0', 'A1', 'B2']);
+    // nothing dated: attachment order
+    expect(mergeParsedLegs([[mk('X1')], [mk('X3')], [mk('X2')]]).map((l) => l.flightNumber)).toEqual(['X1', 'X3', 'X2']);
+    // an undated leg stays right after its dated predecessor
+    expect(
+      mergeParsedLegs([[mk('P1', '2026-10-12', '01:00')], [mk('U1')], [mk('P2', '2026-10-13', '01:00')]]).map((l) => l.flightNumber),
+    ).toEqual(['P1', 'U1', 'P2']);
+    expect(mergeParsedLegs([])).toEqual([]);
+  });
+
+  it('three screenshots (leg 1, leg 2, duplicate of leg 1) give exactly two ordered legs', () => {
+    const s1 = 'EK 601  Karachi (KHI) Mon 12 Oct 2026 02:55\nArrives Dubai (DXB) 04:20\n';
+    const s2 = 'EK 225  Dubai (DXB) Mon 12 Oct 2026 09:55\nArrives San Francisco (SFO) 15:05\n';
+    const legs = parseItineraryPages([s2, s1, s1], opts); // attached in the wrong order on purpose
+    expect(legs.map((l) => l.flightNumber)).toEqual(['EK601', 'EK225']);
   });
 });

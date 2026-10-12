@@ -106,7 +106,11 @@ export class ApiUnavailableError extends ApiError {
 
 // ───────────────────────────── plumbing ─────────────────────────────
 
+/** Per attachment, after downscaling (the worker enforces the same numbers). */
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+/** Attachments per request, and all of them together (decoded, after downscaling). */
+export const MAX_UPLOAD_FILES = 10;
+export const MAX_UPLOAD_TOTAL_BYTES = 20 * 1024 * 1024;
 export const MAX_LONG_EDGE = 1568;
 export const JPEG_QUALITY = 0.85;
 
@@ -236,11 +240,39 @@ export async function blobToBase64(blob: Blob): Promise<string> {
 
 const SUPPORTED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
 
+export interface ImagePayload {
+  image: string;
+  mediaType: string;
+  name?: string;
+}
+
+/** File names travel only as a short label for the model; keep them short and free of control characters. */
+function labelName(file: Blob): string | undefined {
+  const n = (file as File).name;
+  if (typeof n !== 'string') return undefined;
+  const clean = n.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, 100);
+  return clean || undefined;
+}
+
+async function encodeFile(file: Blob, label: string): Promise<{ prepared: Blob; mediaType: string; bytes: number }> {
+  const prepared = await prepareImage(file);
+  if (prepared.size > MAX_UPLOAD_BYTES) throw new ApiError(413, `${label} too large (max 8 MB).`);
+  const mediaType = prepared.type || file.type;
+  if (!SUPPORTED.includes(mediaType)) throw new ApiError(400, `${label === 'File' ? 'Unsupported file type' : `${label}: unsupported file type`} "${mediaType || 'unknown'}".`);
+  return { prepared, mediaType, bytes: prepared.size };
+}
+
 /**
- * Read an itinerary from a photo/PDF (`File | Blob`) or from already-extracted text (`string`).
- * Text is far cheaper than images: prefer it when on-device OCR already produced some.
+ * Read an itinerary from photos/PDFs or from already-extracted text. Accepts
+ *  - one `File | Blob` (single image/PDF; the original request shape),
+ *  - an array of `File | Blob` (one request carrying ALL attachments, in order, so the model sees every
+ *    page together; at most 10 files, 8 MB each and 20 MB in total after downscaling), or
+ *  - `{ text }` (far cheaper than images: prefer it when on-device OCR already produced some).
  */
-export async function extractItinerary(input: File | Blob | { text: string }, opts: ExtractOptions = {}): Promise<ExtractResult> {
+export async function extractItinerary(
+  input: File | Blob | (File | Blob)[] | { text: string },
+  opts: ExtractOptions = {},
+): Promise<ExtractResult> {
   requireBase();
   const common: Record<string, unknown> = {};
   if (opts.provider) common.provider = opts.provider;
@@ -248,14 +280,27 @@ export async function extractItinerary(input: File | Blob | { text: string }, op
   if (opts.model) common.model = opts.model;
 
   let payload: Record<string, unknown>;
-  if ('text' in input && typeof input.text === 'string') {
+  if (Array.isArray(input)) {
+    if (input.length === 0) throw new ApiError(400, 'Attach at least one file.');
+    if (input.length > MAX_UPLOAD_FILES) throw new ApiError(413, `Too many files (max ${MAX_UPLOAD_FILES}).`);
+    const images: ImagePayload[] = [];
+    let total = 0;
+    for (let i = 0; i < input.length; i++) {
+      const file = input[i]!;
+      const { prepared, mediaType, bytes } = await encodeFile(file, `Attachment ${i + 1}`);
+      total += bytes;
+      if (total > MAX_UPLOAD_TOTAL_BYTES) throw new ApiError(413, 'The files are too large together (max 20 MB in total).');
+      const item: ImagePayload = { image: await blobToBase64(prepared), mediaType };
+      const name = labelName(file);
+      if (name) item.name = name;
+      images.push(item);
+    }
+    payload = { ...common, images };
+  } else if ('text' in input && typeof input.text === 'string') {
     payload = { ...common, text: input.text };
   } else {
     const file = input as Blob;
-    const prepared = await prepareImage(file);
-    if (prepared.size > MAX_UPLOAD_BYTES) throw new ApiError(413, 'File too large (max 8 MB).');
-    const mediaType = prepared.type || file.type;
-    if (!SUPPORTED.includes(mediaType)) throw new ApiError(400, `Unsupported file type "${mediaType || 'unknown'}".`);
+    const { prepared, mediaType } = await encodeFile(file, 'File');
     payload = { ...common, image: await blobToBase64(prepared), mediaType };
   }
   return request<ExtractResult>('/api/itinerary/extract', {

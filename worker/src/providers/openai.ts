@@ -4,7 +4,7 @@ import { DEFAULT_OPENAI_MODEL, type Env } from '../env';
 import { HttpError } from '../lib/http';
 import { buildPrompt } from '../prompts';
 import { schemaFor } from '../schema';
-import { PROVIDER_TIMEOUT_MS, type LlmInput, type LlmRaw } from './llm';
+import { PROVIDER_TIMEOUT_MS, attachmentLabel, pdfFileName, type LlmInput, type LlmRaw } from './llm';
 
 /** Indirection so tests can inject a fake client. */
 export const openaiDeps = {
@@ -22,16 +22,19 @@ export function mapOpenAIError(e: unknown): HttpError {
 export async function callOpenAI(env: Env, input: LlmInput): Promise<LlmRaw> {
   const client = openaiDeps.createClient(env.OPENAI_API_KEY ?? '');
   const model = env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL;
-  const prompt = buildPrompt(input.task, input.referenceDate, input.text);
+  const files = input.files ?? [];
+  const prompt = buildPrompt(input.task, input.referenceDate, input.text, files.length || 1);
 
+  // One user message: instruction, then every attachment in order (each preceded by its label when several are sent).
   const content: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [{ type: 'text', text: prompt }];
-  if (input.file) {
-    if (input.file.mediaType === 'application/pdf') {
-      content.push({ type: 'file', file: { filename: 'itinerary.pdf', file_data: `data:application/pdf;base64,${input.file.data}` } });
+  files.forEach((f, i) => {
+    if (input.labelled) content.push({ type: 'text', text: attachmentLabel(i, files.length, f.name) });
+    if (f.mediaType === 'application/pdf') {
+      content.push({ type: 'file', file: { filename: pdfFileName(f, i, input.labelled), file_data: `data:application/pdf;base64,${f.data}` } });
     } else {
-      content.push({ type: 'image_url', image_url: { url: `data:${input.file.mediaType};base64,${input.file.data}` } });
+      content.push({ type: 'image_url', image_url: { url: `data:${f.mediaType};base64,${f.data}` } });
     }
-  }
+  });
 
   try {
     const completion = await client.chat.completions.parse({

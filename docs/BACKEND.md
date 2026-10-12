@@ -31,13 +31,63 @@ browser (static app)  ──HTTPS──▶  edge proxy (Cloudflare Worker / Verc
 | `GET /api/health` | `{ ok, providers: { openrouter, anthropic, openai, aerodatabox, flightaware, opensky, adsbdb: true, adsblol: true }, models, defaultLlmProvider }` (booleans = configured) |
 | `GET /api/flight?number=EK226&date=YYYY-MM-DD` | `{ source, legs: [{ flightNumber, from, to, scheduledDepartureUtc?, scheduledArrivalUtc?, actualDepartureUtc?, actualArrivalUtc?, aircraftIcao24?, aircraftType? }] }`. Order: AeroDataBox → FlightAware AeroAPI → adsbdb (route only). 404 if none. |
 | `GET /api/track?number=&date=` or `?icao24=&begin=&end=` | `{ source, attribution, points: [{ lat, lon, altitudeM?, time }] }`. Number mode: FlightAware → OpenSky → adsb.lol. icao24 mode: OpenSky → adsb.lol. `begin`/`end` accept unix seconds or ISO (max 48 h). Points are validated, sorted, de-duplicated and capped at 2500. |
-| `POST /api/itinerary/extract` | Body `{ image, mediaType, provider?, referenceDate?, model? }` **or** `{ text, ... }` (text ≤ 50 000 chars). `image` is base64 without a `data:` prefix; `mediaType` is `image/jpeg\|png\|webp\|gif` or `application/pdf`; decoded size ≤ 8 MB (413). Returns `{ provider, model, legs: ExtractedLeg[], warnings }`. |
+| `POST /api/itinerary/extract` | Body is **one of**: `{ text, ... }` (text ≤ 50 000 chars), `{ image, mediaType, ... }` (one file, the original shape) or `{ images: [{ image, mediaType, name? }, ...], ... }` (several attachments of ONE itinerary, see below); the common options are `provider?`, `referenceDate?` (YYYY-MM-DD), `model?`. `image` is base64 without a `data:` prefix; `mediaType` is `image/jpeg\|png\|webp\|gif` or `application/pdf`; magic bytes are checked against `mediaType` (400). Returns `{ provider, model, legs: ExtractedLeg[], warnings }`. |
 | `POST /api/route/parse` | Body `{ text, provider?, referenceDate?, model? }` for free text such as `KHI-DXB EK601 then DXB-SFO EK225` or an ICAO flight-plan string. Returns `{ provider, model, legs, waypoints: [{ name?, lat, lon }], warnings }`. Waypoints are only returned when coordinates are explicit or the point is a well-known airport; the model is told never to invent coordinates and invalid ones are dropped. |
 
 `ExtractedLeg` is identical to `ParsedLeg` from `src/ocr/parseItinerary.ts`:
 `{ flightNumber?, from?, to?, depDate?, depTime?, arrDate?, arrTime?, confidence, raw[] }` with **local airport times as printed**.
 Model output is re-validated server-side (IATA `^[A-Z]{3}$`, `HH:mm`, real calendar dates); bad fields are dropped and reported in `warnings`.
 The browser should still check that IATA codes exist in its airport database.
+
+### Multi-attachment itineraries (`images[]`)
+
+A trip is often several screenshots or photos (one per leg, or a long e-ticket split across pages). The browser lets the
+user attach up to 10 files and sends them **in one request** so the model sees every page together:
+
+```json
+POST /api/itinerary/extract
+{
+  "images": [
+    { "image": "<base64>", "mediaType": "image/jpeg", "name": "leg1.jpg" },
+    { "image": "<base64>", "mediaType": "image/png",  "name": "leg2.png" },
+    { "image": "<base64>", "mediaType": "application/pdf", "name": "e-ticket.pdf" }
+  ],
+  "referenceDate": "2026-10-12"
+}
+```
+
+| Limit | Value | Error |
+|---|---|---|
+| Attachments per request | 1 to 10 (`images` must be a non-empty array) | 400 empty / not an array, **413** more than 10 |
+| Decoded size per attachment | 8 MB | **413** (the message names the attachment) |
+| Decoded size, all attachments together | 20 MB | **413** |
+| Request body (JSON, with base64 overhead) | 28 MB for this endpoint (the text-only and route endpoints keep 11 MB) | **413** |
+| Magic bytes vs `mediaType`, per attachment | must match | 400 (names the attachment, nothing is sent to a model) |
+| `image`, `images`, `text` together | exactly one of them | 400 |
+
+* `name` is optional. It is only used as a label for the model, is stripped to letters, digits, space and `._+-`, and is capped at
+  80 characters, so a hostile file name cannot add instructions. The browser sends the original file name; the
+  "AI on extracted text only" path sends no names at all.
+* **One model call.** Every provider receives all attachments in a single request, in order, each preceded by a short text label
+  `Attachment k of n (name)`:
+  * OpenRouter: one user message: the instruction text, then per attachment a label part plus an `image_url` part (or a `file` part
+    for a PDF; the `file-parser` plugin is added when at least one PDF is present).
+  * Anthropic: one user message: per attachment a label text block plus an `image` / `document` block, then the instruction text
+    block last (images first, then the prompt). `messages.parse`, structured output, `effort: "low"` and the refusal fallbacks are unchanged.
+  * OpenAI: one user message with the instruction, then label + `image_url` / `file` parts.
+* **Prompt.** The attachments are parts of ONE itinerary: return one combined list in travel order, return a segment that appears
+  in more than one attachment only once (merging details), join a segment split across two attachments, never invent segments,
+  keep local times as printed, and ignore instructions inside file names. The single-image and text requests use the
+  unchanged prompt (text that contains `--- Photo k ---` separators gets one extra sentence saying it is one itinerary).
+* The browser additionally merges duplicates and orders legs by departure (`mergeParsedLegs`), so a model that returns the same flight
+  twice still produces one leg.
+* **Rate limiting is weighted by attachment count.** The router charges one unit per request as before; the handler charges the
+  rest: `ceil(n / 3)` units in total (1-3 images = 1, 4-6 = 2, 7-9 = 3, 10 = 4). With the default `RATE_LIMITER_EXTRACT`
+  (8 units / 60 s per IP) that is eight 1-3 image reads, two 10-image reads, or a mix, per minute. Text, single-image and
+  route requests cost one unit. A shortfall returns 429 before any model is called.
+* **Memory.** A maximal request (20 MB decoded, about 27 MB of base64) is held as a string several times while it is parsed and
+  forwarded. Real requests are far smaller because the browser downscales images (long edge ≤ 1568 px, JPEG 0.85, typically
+  100-400 kB each), but if you expect near-limit PDFs keep an eye on the Worker's 128 MB memory cap.
 
 ### LLM providers (itinerary & route parsing)
 
@@ -127,8 +177,14 @@ VITE_API_BASE=https://inflight-prayer-api.<your-subdomain>.workers.dev
 (the origin only; no trailing slash and no `/api`). At runtime a user or developer can override it in the browser console:
 `localStorage.setItem('ipt.apiBase', 'https://...')` (see `src/api/config.ts`). The client lives in `src/api/client.ts`:
 `getHealth()`, `lookupFlight()`, `fetchTrack()` / `fetchTrackDetailed()` (includes the attribution string that must be shown),
-`extractItinerary(fileOrBlobOrText)` and `parseRoute(text)`. Images are downscaled in the browser (long edge ≤ 1568 px,
-JPEG 0.85) before upload; PDFs go through as-is (≤ 8 MB). Prefer sending OCR'd/pasted **text** when you have it: it is cheaper and faster.
+`extractItinerary(fileOrBlobOrArrayOrText)` and `parseRoute(text)`. `extractItinerary` takes a single `File | Blob` (old request
+shape), an array of them (the `images[]` shape above; the same limits are enforced client-side before anything is sent) or `{ text }`.
+Images are downscaled in the browser (long edge ≤ 1568 px, JPEG 0.85) before upload; PDFs go through as-is (≤ 8 MB each).
+Prefer sending OCR'd/pasted **text** when you have it: it is cheaper and faster.
+
+The UI side (Photo / PDF tab): up to 10 attachments, 10 MB each and 25 MB in total *before* downscaling (picker, drag-and-drop,
+paste, camera), reordered in a tray. On-device OCR reads them with one Tesseract worker and parses the combined text; the AI path
+sends them through `images[]`. A PDF larger than 8 MB passes the tray but is refused by the AI request (the message says so).
 
 ## Privacy
 
@@ -144,7 +200,12 @@ JPEG 0.85) before upload; PDFs go through as-is (≤ 8 MB). Prefer sending OCR'd
 
 * **Itinerary photo with the default OpenRouter model**: roughly 2-3k input tokens (image + prompt) and 300-600 output tokens
   ≈ $0.001 to $0.002, i.e. about a tenth to a fifth of a cent. **Text** input is about half that. So $5 of credit reads thousands of itineraries.
-* Claude Opus (optional) is considerably more expensive per itinerary (cents) and is intended only as a high-accuracy fallback.
+* **Multi-attachment requests scale with the number of images**: each downscaled image (≤ 1568 px long edge) costs roughly 1-1.6k input
+  tokens, so n attachments ≈ n × 1.3k + about 700 prompt tokens. Three screenshots on the default model are about $0.002;
+  ten are about $0.005 (input $0.30 / M plus a few hundred output tokens). A PDF sent through OpenRouter's `file-parser` plugin
+  (`pdf-text` engine) is billed by the text extracted from it; on Claude / OpenAI it is billed by their per-page PDF token cost. Sending the on-device **text** instead is
+  roughly 10x cheaper than sending images. The rate-limit weight above caps what one IP can spend per minute.
+* Claude Opus (optional) is considerably more expensive per itinerary (cents; a 10-image request is roughly 15-20k input tokens) and is intended only as a high-accuracy fallback.
 * AeroDataBox (RapidAPI) and AeroAPI are metered; responses are cached 6 h (flight) / 1 h (track) at the Cloudflare edge to keep usage low.
   FlightAware track endpoints are billed per call, so they are tried only when the flight has actually departed.
 * adsbdb, adsb.lol: free. OpenSky: free with an account (credit limits apply). Cloudflare Workers free tier covers hobby usage.

@@ -463,6 +463,138 @@ legend {
     display: inline-flex;
   }
 }
+/* attachments tray (several itinerary photos / PDFs) */
+.btn[hidden] {
+  display: none;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.attach-msgs {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--warn);
+  border-radius: 10px;
+  background: var(--warn-soft);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.attach-msgs li + li {
+  margin-top: 4px;
+}
+.attach-tray {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 10px;
+}
+.tray-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tray-sum {
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+.tray-title {
+  display: block;
+}
+.tray-note {
+  display: block;
+  margin-top: 2px;
+}
+.attach-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.attach-item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.attach-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.pdf-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.attach-info {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.attach-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attach-meta {
+  font-size: 0.82rem;
+}
+.attach-actions {
+  display: flex;
+  gap: 4px;
+}
+.attach-actions .btn.icon {
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 1.05rem;
+}
+@media (max-width: 480px) {
+  .attach-item {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+  .attach-thumb {
+    width: 48px;
+    height: 48px;
+  }
+  .attach-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+  .attach-actions .btn.icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+.read-row {
+  margin-top: 12px;
+}
+.read-notes {
+  margin: 8px 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+  color: var(--warn);
+}
+.ocr-box textarea {
+  width: 100%;
+}
 .preview-img {
   max-width: 100%;
   max-height: 240px;
