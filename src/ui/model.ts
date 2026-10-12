@@ -1,5 +1,5 @@
 /** Editable (draft) itinerary + settings model, and conversion to/from engine types. */
-import type { Airport, FlightLeg, Madhab, HighLatitudeRule, PrayerSettings, TrackPoint } from '../types';
+import type { Airport, FlightLeg, Madhab, HighLatitudeRule, PrayerSettings, ProfileId, TrackPoint } from '../types';
 import { DEFAULT_SETTINGS, METHODS, mergeSettings, MADHAB_INFO } from '../prayer/methods';
 import { localToUtc, utcOffsetMinutes } from '../time/tz';
 import { isValidDate, parseNumber } from './dom';
@@ -8,9 +8,6 @@ export const FT_PER_M = 3.28084;
 export const DEFAULT_CRUISE_FT = 36000;
 export const MAX_CRUISE_FT = 60000;
 
-/** How polar day / polar night are handled (setting added to PrayerSettings by the engine). */
-export type PolarFallback = 'nearestLocation' | 'fixedLatitude';
-export type WithPolar = PrayerSettings & { polarFallback?: PolarFallback };
 
 export type TzChoice = 'utc' | 'origin' | 'dest' | 'aircraft';
 export const TZ_CHOICES: readonly TzChoice[] = ['utc', 'origin', 'dest', 'aircraft'];
@@ -176,7 +173,8 @@ export function draftsToLegs(drafts: LegDraft[], resolve: Resolver): { legs: Fli
 // ───────────────────────────── settings sanitising ─────────────────────────────
 
 const MADHABS = Object.keys(MADHAB_INFO) as Madhab[];
-const RULES: HighLatitudeRule[] = ['angleBased', 'oneSeventh', 'middleOfNight', 'nearestLatitude', 'none'];
+const RULES: HighLatitudeRule[] = ['angleBased', 'oneSeventh', 'middleOfNight', 'nearestLatitude', 'redTwilight', 'none'];
+const PROFILE_IDS: ProfileId[] = ['barelvi', 'deobandi', 'custom'];
 
 function finiteOr<T extends number | null>(v: unknown, fallback: T): number | T {
   return typeof v === 'number' && Number.isFinite(v) ? v : fallback;
@@ -184,6 +182,34 @@ function finiteOr<T extends number | null>(v: unknown, fallback: T): number | T 
 
 /** Coerce untrusted JSON (localStorage / URL hash) into a usable AppSettings. Never throws. */
 export function sanitizeAppSettings(raw: unknown): AppSettings {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const p0 = (r.prayer && typeof r.prayer === 'object' ? r.prayer : {}) as Record<string, unknown>;
+  const out = sanitizeCore(raw);
+  // Settings saved before profiles existed carry no profile: they are the user's own choices.
+  if (!PROFILE_IDS.includes(p0.profile as ProfileId)) out.prayer.profile = 'custom';
+  return out;
+}
+
+/** True when stored pre-profile settings are exactly the old defaults (Hanafi, Karachi 18/18, angle-based, no offsets). */
+export function isLegacyDefault(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return true;
+  const p = (raw as Record<string, unknown>).prayer as Record<string, unknown> | undefined;
+  if (!p || typeof p !== 'object') return true;
+  const m = (p.method ?? {}) as Record<string, unknown>;
+  const o = (p.offsets ?? {}) as Record<string, unknown>;
+  const zero = Object.values(o).every((v) => v === 0 || v === undefined);
+  return (
+    p.profile === undefined &&
+    p.madhab === 'hanafi' &&
+    p.highLatitudeRule === 'angleBased' &&
+    (m.id === 'karachi' || m.id === undefined) &&
+    m.fajrAngle === 18 && m.ishaAngle === 18 && !m.maghribAngle &&
+    zero && p.dipForSunriseSunset !== false && p.dipForTwilight !== true &&
+    (p.polarFallback === undefined || p.polarFallback === 'nearestLocation')
+  );
+}
+
+function sanitizeCore(raw: unknown): AppSettings {
   const base = defaultAppSettings();
   if (!raw || typeof raw !== 'object') return base;
   const r = raw as Record<string, unknown>;
@@ -219,9 +245,10 @@ export function sanitizeAppSettings(raw: unknown): AppSettings {
       isha: finiteOr(o.isha, 0) as number,
     },
   });
-  if (p.polarFallback === 'nearestLocation' || p.polarFallback === 'fixedLatitude') {
-    (prayer as WithPolar).polarFallback = p.polarFallback;
-  }
+  if (p.polarFallback === 'nearestLocation' || p.polarFallback === 'fixedLatitude') prayer.polarFallback = p.polarFallback;
+  if (p.fajrFallback === 'nearestLocation' || p.fajrFallback === 'redTwilight') prayer.fajrFallback = p.fajrFallback;
+  if (typeof p.redTwilightAngle === 'number' && Number.isFinite(p.redTwilightAngle)) prayer.redTwilightAngle = p.redTwilightAngle;
+  if (PROFILE_IDS.includes(p.profile as ProfileId)) prayer.profile = p.profile as ProfileId;
   const tz = Array.isArray(r.tzChoices) ? (r.tzChoices.filter((x) => TZ_CHOICES.includes(x as TzChoice)) as TzChoice[]) : base.tzChoices;
   const step = typeof r.stepMinutes === 'number' && STEP_CHOICES.includes(r.stepMinutes) ? r.stepMinutes : 1;
   return { prayer, tzChoices: tz.length > 0 ? Array.from(new Set(tz)) : base.tzChoices, stepMinutes: step };

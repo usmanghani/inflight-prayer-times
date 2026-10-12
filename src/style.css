@@ -366,6 +366,7 @@ legend {
   padding: 0 6px;
 }
 .grid-2 {
+  align-items: start;
   display: grid;
   gap: 0 12px;
   grid-template-columns: minmax(0, 1fr);
@@ -1305,4 +1306,35 @@ details.more > summary {
   cursor: pointer;
   margin: 8px 0;
   font-weight: 600;
+}
+
+.badge.info {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+}
+.profile-block {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px 4px;
+  margin-bottom: 12px;
+}
+.profile-desc {
+  font-size: 0.9rem;
+  margin: 4px 0 8px;
+}
+.profile-sources {
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+.profile-sources ul {
+  margin: 4px 0 0;
+  padding-left: 1.2rem;
+}
+.profile-sources a {
+  overflow-wrap: anywhere;
+}
+.profile-disclaimer {
+  margin-bottom: 8px;
 }

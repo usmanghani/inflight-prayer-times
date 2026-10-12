@@ -9,7 +9,7 @@ import { h } from '../dom';
 import {
   PRAYER_AR, PRAYER_LABEL, capitalise, fmtAlt, fmtDuration, fmtInTz, formatLatLon, offsetLabel, qiblaPhrase, whereText,
 } from '../format';
-import { timeIn, offsetIn, primaryCol, zoneFor, type ResultsModel } from './model';
+import { eventBadge, timeIn, offsetIn, primaryCol, zoneFor, type ResultsModel } from './model';
 
 function qiblaAt(s: AircraftState): string {
   const abs = qiblaBearing(s.lat, s.lon);
@@ -48,7 +48,7 @@ function timesTable(model: ResultsModel, task: PrayerTask): HTMLElement {
   );
 }
 
-function badges(task: PrayerTask): HTMLElement {
+function badges(task: PrayerTask, model: ResultsModel): HTMLElement {
   const b: HTMLElement[] = [];
   if (task.inAir) b.push(h('span', { class: 'badge air' }, 'In the air'));
   else {
@@ -56,13 +56,8 @@ function badges(task: PrayerTask): HTMLElement {
     b.push(h('span', { class: 'badge ground' }, a ? `On the ground at ${a}` : 'On the ground'));
   }
   const ev = task.windowStart;
-  if (ev && (ev.note === 'highLatitudeRule' || ev.note === 'nearestLatitude')) {
-    b.push(
-      ev.note === 'nearestLatitude'
-        ? h('span', { class: 'badge warn', title: 'The Sun does not rise and set normally here, so the time is taken from the nearest place that has a normal day.' }, 'Times borrowed from the nearest location with a normal day')
-        : h('span', { class: 'badge warn', title: 'The start time comes from your high-latitude rule, not directly from the Sun.' }, 'High-latitude rule'),
-    );
-  }
+  const eb = ev ? eventBadge(model, ev) : null;
+  if (eb) b.push(h('span', { class: `badge ${eb.cls === 'warn' ? 'warn' : 'info'}`, title: eb.title }, eb.text));
   if (ev?.anomaly === 'windowRepeated') b.push(h('span', { class: 'badge alert' }, 'Window repeated'));
   if (ev?.anomaly === 'windowSkipped') b.push(h('span', { class: 'badge alert' }, 'Window skipped'));
   if (ev?.anomaly === 'polarDay' || ev?.anomaly === 'polarNight') b.push(h('span', { class: 'badge alert' }, ev.anomaly === 'polarDay' ? 'Polar day' : 'Polar night'));
@@ -88,7 +83,7 @@ export function renderPrayerCard(model: ResultsModel, task: PrayerTask, index: n
       'header',
       null,
       h('h3', null, h('span', { class: 'en' }, PRAYER_LABEL[task.prayer]), ' ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl' }, PRAYER_AR[task.prayer])),
-      badges(task),
+      badges(task, model),
     ),
     timesTable(model, task),
     h('dl', { class: 'facts' }, facts),
@@ -143,7 +138,7 @@ function splitList<T>(list: T[], first = 4): T[][] {
   return list.length <= first + 1 ? [list] : [list.slice(0, first), list.slice(first)];
 }
 
-function kindLabel(k: string): string {
+export function kindLabel(k: string): string {
   switch (k) {
     case 'windowRepeated': return 'Window repeated';
     case 'windowSkipped': return 'Window skipped';

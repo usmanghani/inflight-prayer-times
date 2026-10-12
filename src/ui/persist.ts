@@ -1,7 +1,9 @@
 /** localStorage persistence and URL-hash sharing. Every storage access is wrapped in try/catch. */
-import { defaultAppSettings, sanitizeAppSettings, sanitizeDrafts, type AppSettings, type LegDraft } from './model';
+import { defaultAppSettings, isLegacyDefault, sanitizeAppSettings, sanitizeDrafts, type AppSettings, type LegDraft } from './model';
 
-export const SETTINGS_KEY = 'ipt.ui.settings.v1';
+export const SETTINGS_KEY = 'ipt.ui.settings.v2';
+/** v1 stored pre-profile settings (old defaults: Maghrib +0, angle-based). Migrated on load. */
+export const LEGACY_SETTINGS_KEY = 'ipt.ui.settings.v1';
 export const ITINERARY_KEY = 'ipt.ui.itinerary.v1';
 
 export function storageGet(key: string): string | null {
@@ -41,7 +43,22 @@ function parseJson(text: string | null): unknown {
 
 export function loadSettings(): AppSettings {
   const raw = parseJson(storageGet(SETTINGS_KEY));
-  return raw ? sanitizeAppSettings(raw) : defaultAppSettings();
+  if (raw) return sanitizeAppSettings(raw);
+  // v1 (before profiles): untouched old defaults upgrade to the Barelvi default; customised settings are kept as 'custom'.
+  const legacy = parseJson(storageGet(LEGACY_SETTINGS_KEY));
+  if (legacy && !isLegacyDefault(legacy)) {
+    const kept = sanitizeAppSettings(legacy);
+    // tz choices / step from the legacy blob are kept by sanitizeAppSettings
+    return kept;
+  }
+  if (legacy) {
+    const base = defaultAppSettings();
+    const old = sanitizeAppSettings(legacy);
+    base.tzChoices = old.tzChoices;
+    base.stepMinutes = old.stepMinutes;
+    return base;
+  }
+  return defaultAppSettings();
 }
 
 export function saveSettings(s: AppSettings): void {

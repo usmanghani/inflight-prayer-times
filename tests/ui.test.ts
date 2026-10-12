@@ -24,6 +24,11 @@ import { decodeShareHash, encodeShareHash } from '../src/ui/persist';
 import { defaultAppSettings, blankLeg } from '../src/ui/model';
 import { nightPolygon, subsolarPoint } from '../src/ui/terminator';
 import { qiblaPhrase } from '../src/ui/format';
+import { PROFILES } from '../src/prayer/methods';
+import { loadSettings } from '../src/ui/persist';
+import { findLibraryFlight, libraryFlightToLeg } from '../src/data/flights';
+import { getAirport } from '../src/data/airports';
+import { legToDraft } from '../src/ui/model';
 
 let app: AppHandle | null = null;
 let root: HTMLElement;
@@ -179,7 +184,140 @@ describe('settings', () => {
   it('persists settings to localStorage', async () => {
     await mount();
     setSelect('set-madhab', 'maliki');
-    expect(localStorage.getItem('ipt.ui.settings.v1')).toContain('maliki');
+    expect(localStorage.getItem('ipt.ui.settings.v2')).toContain('maliki');
+  });
+});
+
+describe('profiles', () => {
+  it('defaults to Barelvi with description, sources and disclaimer', async () => {
+    const a = await mount();
+    expect((document.getElementById('set-profile') as HTMLSelectElement).value).toBe('barelvi');
+    expect(a.settings.get().prayer.profile).toBe('barelvi');
+    expect(a.settings.get().prayer.highLatitudeRule).toBe('redTwilight');
+    expect(a.settings.get().prayer.offsets.maghrib).toBe(3);
+    const info = document.getElementById('profile-info')!;
+    expect(info.textContent).toContain('Sahibayn');
+    expect(info.textContent).toContain('Follow your own mufti; this app is not a fatwa.');
+    const links = Array.from(info.querySelectorAll('a'));
+    expect(links.length).toBe(PROFILES.barelvi.sources.length);
+    for (const l of links) {
+      expect(l.getAttribute('target')).toBe('_blank');
+      expect(l.getAttribute('rel')).toBe('noopener noreferrer');
+      expect(l.getAttribute('href')).toMatch(/^https:\/\//);
+    }
+    expect((document.getElementById('set-hl') as HTMLSelectElement).value).toBe('redTwilight');
+    expect(document.querySelector('label[for^="set-red"]')?.textContent).toContain('Red-twilight angle');
+    expect(document.getElementById('set-fajr-fb')).toBeTruthy();
+  });
+
+  it('switching to Deobandi applies its settings and hides red-twilight controls', async () => {
+    const a = await mount();
+    setSelect('set-profile', 'deobandi');
+    const p = a.settings.get().prayer;
+    expect(p.profile).toBe('deobandi');
+    expect(p.highLatitudeRule).toBe('nearestLatitude');
+    expect(p.offsets.maghrib).toBe(0);
+    expect(document.getElementById('profile-info')!.textContent).toContain('Wifaq');
+    expect(document.getElementById('set-fajr-fb')).toBeNull();
+    expect(localStorage.getItem('ipt.ui.settings.v2')).toContain('"profile":"deobandi"');
+  });
+
+  it('editing any setting flips the profile to Custom and keeps the values', async () => {
+    const a = await mount();
+    const fajrId = (document.querySelector('label[for^="set-fajr"]') as HTMLLabelElement).htmlFor;
+    setText(fajrId, '17');
+    expect(a.settings.get().prayer.profile).toBe('custom');
+    expect((document.getElementById('set-profile') as HTMLSelectElement).value).toBe('custom');
+    expect(a.settings.get().prayer.method.fajrAngle).toBe(17);
+    expect(a.settings.get().prayer.highLatitudeRule).toBe('redTwilight'); // kept
+    // display-only changes do not flip the profile
+    setSelect('set-profile', 'barelvi');
+    setSelect('set-step', '5');
+    expect(a.settings.get().prayer.profile).toBe('barelvi');
+    setSelect('set-hl', 'angleBased');
+    expect(a.settings.get().prayer.profile).toBe('custom');
+    expect(document.getElementById('set-fajr-fb')).toBeNull();
+  });
+
+  it('validates the red-twilight angle', async () => {
+    const a = await mount();
+    const redId = (document.querySelector('label[for^="set-red"]') as HTMLLabelElement).htmlFor;
+    setText(redId, '25');
+    expect(document.querySelector('.settings-errors')!.textContent).toContain('red-twilight angle must not exceed');
+    setText(redId, '40');
+    expect(document.querySelector('.settings-errors')!.textContent).toContain('between 0° and 30°');
+    setText(redId, '12');
+    expect((document.querySelector('.settings-errors') as HTMLElement).hidden).toBe(true);
+    expect(a.settings.get().prayer.redTwilightAngle).toBe(12);
+  });
+
+  it('renders the red-twilight badge for a summer high-latitude itinerary', async () => {
+    const a = await mount();
+    const leg = libraryFlightToLeg(findLibraryFlight('BA117')!, '2026-06-21', getAirport); // JFK -> LHR, midsummer
+    a.legs.setLegs([legToDraft(leg, getAirport)]);
+    await a.calculate();
+    await waitFor(() => prayers().length > 0);
+    const text = document.querySelector('.cards')!.textContent!;
+    expect(text).toContain('Isha at red twilight (12°) — Sahibayn');
+    expect(text).toMatch(/Borrowed from nearest location/);
+    // Deobandi profile: no red-twilight badge
+    setSelect('set-profile', 'deobandi');
+    await a.whenIdle();
+    await waitFor(() => !document.querySelector('.cards')!.textContent!.includes('red twilight'));
+    expect(document.body.textContent).not.toMatch(/NaN|Invalid Date|undefined/);
+  });
+
+  it('loads old persisted settings: legacy defaults upgrade to Barelvi, customised ones are kept as Custom', () => {
+    const legacyDefault = {
+      prayer: {
+        madhab: 'hanafi',
+        method: { id: 'karachi', name: 'University of Islamic Sciences, Karachi', fajrAngle: 18, ishaAngle: 18, ishaIntervalMin: null, maghribAngle: null, midnight: 'standard' },
+        highLatitudeRule: 'angleBased', dipForSunriseSunset: true, dipForTwilight: false,
+        offsets: { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 },
+      },
+      tzChoices: ['utc', 'aircraft'], stepMinutes: 5,
+    };
+    localStorage.setItem('ipt.ui.settings.v1', JSON.stringify(legacyDefault));
+    let s = loadSettings();
+    expect(s.prayer.profile).toBe('barelvi');
+    expect(s.prayer.highLatitudeRule).toBe('redTwilight');
+    expect(s.prayer.offsets.maghrib).toBe(3);
+    expect(s.tzChoices).toEqual(['utc', 'aircraft']);
+    expect(s.stepMinutes).toBe(5);
+
+    const custom = { ...legacyDefault, prayer: { ...legacyDefault.prayer, madhab: 'shafii', highLatitudeRule: 'oneSeventh' } };
+    localStorage.setItem('ipt.ui.settings.v1', JSON.stringify(custom));
+    s = loadSettings();
+    expect(s.prayer.profile).toBe('custom');
+    expect(s.prayer.madhab).toBe('shafii');
+    expect(s.prayer.highLatitudeRule).toBe('oneSeventh');
+    expect(s.prayer.redTwilightAngle).toBe(12); // new fields filled with defaults
+
+    // v2 with an explicit profile and the new rule round-trips
+    localStorage.setItem('ipt.ui.settings.v2', JSON.stringify({ prayer: { highLatitudeRule: 'redTwilight', profile: 'barelvi', redTwilightAngle: 11 } }));
+    s = loadSettings();
+    expect(s.prayer.highLatitudeRule).toBe('redTwilight');
+    expect(s.prayer.redTwilightAngle).toBe(11);
+    expect(s.prayer.profile).toBe('barelvi');
+    // garbage does not break loading
+    localStorage.removeItem('ipt.ui.settings.v1');
+    localStorage.setItem('ipt.ui.settings.v2', '{not json');
+    expect(loadSettings().prayer.profile).toBe('barelvi');
+  });
+
+  it('share links keep the new fields; links without a profile load as Custom', () => {
+    const s = defaultAppSettings();
+    s.prayer.redTwilightAngle = 11;
+    const legs = [blankLeg({ from: 'KHI', to: 'DXB', depLocal: '2026-10-12T02:55', arrLocal: '2026-10-12T04:20' })];
+    const back = decodeShareHash(encodeShareHash(legs, s))!;
+    expect(back.settings.prayer.redTwilightAngle).toBe(11);
+    expect(back.settings.prayer.profile).toBe('barelvi');
+    expect(back.settings.prayer.highLatitudeRule).toBe('redTwilight');
+    const old = { v: 1, legs: [{ from: 'KHI', to: 'DXB', depLocal: '2026-10-12T02:55', arrLocal: '2026-10-12T04:20' }], settings: { prayer: { madhab: 'hanafi', highLatitudeRule: 'angleBased' } } };
+    const hash = '#s=' + btoa(JSON.stringify(old)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const o = decodeShareHash(hash)!;
+    expect(o.settings.prayer.profile).toBe('custom');
+    expect(o.settings.prayer.highLatitudeRule).toBe('angleBased');
   });
 });
 

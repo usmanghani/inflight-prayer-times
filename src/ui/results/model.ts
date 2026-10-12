@@ -1,5 +1,5 @@
 /** Shared model for the results sections. */
-import type { AircraftState, Airport, FlightLeg, MinuteSample, PrayerWindow } from '../../types';
+import type { AircraftState, Airport, FlightLeg, MinuteSample, PrayerEvent, PrayerWindow } from '../../types';
 import { tzAt, utcOffsetMinutes } from '../../time/tz';
 import type { ComputeOk } from '../computeCore';
 import type { AppSettings } from '../model';
@@ -164,4 +164,40 @@ export function axisTicks(t0: number, t1: number, zone: string, maxTicks = 9): A
     lastDay = day;
   }
   return out;
+}
+
+export interface EventBadge {
+  text: string;
+  title: string;
+  cls: 'warn' | 'info';
+}
+
+function fmtLat(b: number): string {
+  return `${Math.abs(b).toFixed(1)}°${b >= 0 ? 'N' : 'S'}`;
+}
+
+/** Badge for an event whose time did not come straight from the Sun's angle (null when it did). */
+export function eventBadge(model: ResultsModel, ev: PrayerEvent): EventBadge | null {
+  if (ev.note === 'redTwilight') {
+    const a = model.settings.prayer.redTwilightAngle ?? 12;
+    return {
+      text: `Isha at red twilight (${a}°) — Sahibayn`,
+      title: 'The white twilight (18°) does not end here, so Isha is taken when the red twilight disappears (the opinion of Abu Yusuf and Muhammad), as in the Barelvi (Ahl-e-Sunnat) profile.',
+      cls: 'info',
+    };
+  }
+  if (ev.note === 'nearestLatitude') {
+    const evs = model.data.result.events;
+    const i = evs.findIndex((e) => e.prayer === ev.prayer && e.time.getTime() === ev.time.getTime());
+    const b = i >= 0 ? model.data.eventBorrowed?.[i] : null;
+    return {
+      text: typeof b === 'number' ? `Borrowed from nearest location ≈${fmtLat(b)}` : 'Borrowed from the nearest location with a normal day',
+      title: 'The Sun does not behave normally here (twilight never ends or the Sun does not set), so the time is taken from the nearest place on the same meridian where it does.',
+      cls: 'warn',
+    };
+  }
+  if (ev.note === 'highLatitudeRule') {
+    return { text: 'High-latitude rule', title: 'The start time comes from your high-latitude rule, not directly from the Sun.', cls: 'warn' };
+  }
+  return null;
 }

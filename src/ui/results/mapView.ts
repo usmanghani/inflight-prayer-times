@@ -6,8 +6,9 @@ import { legRoute } from '../../flight/journey';
 import { h, setChildren, uid } from '../dom';
 import { PHASE_LABEL, PRAYER_LABEL, fmtAlt, formatLatLon, qiblaPhrase } from '../format';
 import { nightPolygon } from '../terminator';
-import { WINDOW_HEX, stateTz, timeIn, type ResultsModel } from './model';
+import { WINDOW_HEX, eventBadge, stateTz, timeIn, type ResultsModel } from './model';
 import { renderScrubber } from './scrubber';
+import { kindLabel } from './summary';
 
 const LEG_COLORS = ['#2563eb', '#0f766e', '#9333ea', '#b45309', '#be123c', '#4d7c0f'];
 
@@ -120,9 +121,11 @@ export function renderMapSection(model: ResultsModel): MapSection {
           ...model.cols.map((c) => h('div', null, `${c.key === 'aircraft' ? 'Under aircraft' : c.label}: ${timeIn(c, ev.time, pos, { seconds: true })}`)),
           h('div', null, s.onGround ? `On the ground${s.airport ? ` at ${s.airport}` : ''}` : `${formatLatLon(s.lat, s.lon)}, ${fmtAlt(s.altitudeM)}, ${PHASE_LABEL[s.phase].toLowerCase()}`),
           h('div', { class: 'muted' }, qiblaPhrase(abs, relativeBearing(abs, s.headingDeg), s.onGround)),
-          ev.anomaly ? h('div', { class: 'badge alert' }, ev.anomaly) : null,
-          ev.note === 'nearestLatitude' ? h('div', { class: 'badge warn' }, 'Times borrowed from the nearest location with a normal day') : null,
-          ev.note === 'highLatitudeRule' ? h('div', { class: 'badge warn' }, 'High-latitude rule') : null,
+          ev.anomaly ? h('div', { class: 'badge alert' }, kindLabel(ev.anomaly)) : null,
+          (() => {
+            const eb = eventBadge(model, ev);
+            return eb ? h('div', { class: `badge ${eb.cls === 'warn' ? 'warn' : 'info'}`, title: eb.title }, eb.text) : null;
+          })(),
         );
         m.bindPopup(body);
       }

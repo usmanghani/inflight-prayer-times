@@ -33,6 +33,8 @@ export interface ComputeOk {
   tasks: PrayerTask[];
   timeline: ReturnType<typeof windowTimeline>;
   ground: GroundReference[];
+  /** Per result.events entry: latitude (signed) its time was borrowed from, when note is 'nearestLatitude'. */
+  eventBorrowed: (number | null)[];
   computeMs: number;
 }
 
@@ -70,7 +72,27 @@ export function runCompute(req: ComputeRequest): ComputeResponse {
     const last = legs[legs.length - 1];
     if (last) addGround(last.to, last.arrivalUtc, 'destination');
 
-    return { ok: true, result, tasks, timeline, ground, computeMs: Math.round(now() - t0) };
+    const eventBorrowed = result.events.map((ev): number | null => {
+      if (ev.note !== 'nearestLatitude') return null;
+      try {
+        const base = solarDateAt(ev.time, ev.state.lon);
+        const t0 = Date.parse(`${base}T00:00:00Z`);
+        for (const k of [0, -1, 1]) {
+          const d = new Date(t0 + k * 86_400_000).toISOString().slice(0, 10);
+          const st = computeStaticTimes({ lat: ev.state.lat, lon: ev.state.lon, elevationM: ev.state.altitudeM }, d, req.settings);
+          const pt = st[ev.prayer as 'fajr' | 'sunrise' | 'dhuhr' | 'asr' | 'maghrib' | 'isha'];
+          if (pt.time && Math.abs(pt.time.getTime() - ev.time.getTime()) < 5 * 60_000) {
+            const b = st.borrowedLatitudes?.[ev.prayer] ?? st.borrowedLatitude;
+            return typeof b === 'number' && Number.isFinite(b) ? b : null;
+          }
+        }
+      } catch {
+        /* display only */
+      }
+      return null;
+    });
+
+    return { ok: true, result, tasks, timeline, ground, eventBorrowed, computeMs: Math.round(now() - t0) };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
