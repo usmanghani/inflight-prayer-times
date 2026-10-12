@@ -104,10 +104,10 @@ tests/                     vitest unit + route-matrix regression
 | 1 | Scaffold (Vite/TS/Vitest), `types.ts` contracts, CI + Pages workflow, MIT licence | lead | ✅ done |
 | 2 | Astronomy & prayer engine: `astro/`, `prayer/methods.ts`, `prayer/static.ts`, `geo/qibla.ts` | Agent A | ✅ done, 101 tests |
 | 3 | Flight & journey: `geo/geodesy.ts`, `flight/*`, `time/tz.ts` | Agent B | ✅ done, 118 tests |
-| 4 | Data & OCR: airport DB build, real flight library, Tesseract OCR + itinerary parser | Agent C | 🔄 in progress |
+| 4 | Data & OCR: 5,403 airports, 223-flight library (both directions), 14 sample itineraries, Tesseract OCR + itinerary parser | Agent C | ✅ done, 55 tests |
 | 5 | In-flight engine `prayer/inflight.ts`, `prayer/summary.ts`, route-matrix regression, `docs/ALGORITHM.md` | Agent D | 🔄 in progress |
 | 6 | Edge proxy `worker/` (Cloudflare + Vercel adapter), `src/api/` client, `docs/BACKEND.md` | Agent F | 🔄 in progress |
-| 7 | Regression fixture tooling `scripts/fixtures/` + real-track fixtures | Agent G | ⏳ after Agent C |
+| 7 | Regression fixture tooling `scripts/fixtures/` + real-track fixtures + library verification vs adsbdb | Agent G | 🔄 in progress |
 | 8 | UI: form, settings, Leaflet map, timeline, table, CSV/ICS, PWA, dark mode | Agent E | ⏳ after C, D, F |
 | 9 | Integration review, README, push to GitHub, enable Pages | lead | ⏳ blocked on GitHub push access |
 
