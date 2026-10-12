@@ -27,12 +27,13 @@ flying west faster than the sun at high latitude, windows that repeat or skip,
 | Setting | Options | Default |
 |---|---|---|
 | Asr juristic method | Hanafi (shadow factor 2), Shafi'i / Maliki / Hanbali (factor 1), Ja'fari (factor 1) | **Hanafi** |
+| Profile | **Barelvi (Ahl-e-Sunnat)**, Deobandi, Custom | **Barelvi** |
 | Calculation preset | Karachi, MWL, ISNA, Egypt, Umm al-Qura, Gulf, Kuwait, Qatar, Singapore (MUIS), JAKIM, Diyanet (Turkey), Tehran, Ja'fari (Leva), France UOIF, Russia, Dubai, Custom | **Karachi (18°/18°)** |
 | Fajr angle / Isha angle | any number 0–30° (validated) | **18° / 18°** |
 | Isha by interval | minutes after Maghrib (Umm al-Qura 90) | off |
 | Maghrib angle / interval | for Ja'fari/Tehran (4° / 4.5°) | sunset |
 | Midnight | Standard (sunset→sunrise) / Ja'fari (sunset→fajr) | Standard |
-| High-latitude rule (twilight never reaches the angle) | Angle-based, 1/7 of night, Middle of night, Nearest location, None (+ proposed: Nearest day) | Angle-based — **proposed change to Nearest location, awaiting user (D-F6)** |
+| High-latitude rule (twilight never reaches the angle) | Red twilight (Sahibayn), Angle-based, 1/7 of night, Middle of night, Nearest location, None | **Red twilight 12° for Isha (Barelvi), Fajr → nearest location** (D-F10) |
 | Polar day / night fallback | Nearest location (aqrab al-bilad, dynamic), Fixed latitude 48.5° | **Nearest location** |
 | Altitude horizon dip | Apply dip to Sunrise/Maghrib (default on); also to Fajr/Isha (off) | on / off |
 | Per-prayer offsets (ihtiyat) | ± minutes each | 0 |
@@ -178,7 +179,8 @@ lead; "Agent" = choice made inside a module by a sub-agent and accepted by the l
 | D-F7 | Traveller notes: Hanafi — qasr is wajib for a musafir, no combining (jam') except Arafah/Muzdalifah; Shafi'i/Maliki/Hanbali/Ja'fari — jam' permitted | Lead (agent wording, not independently re-verified) |
 | D-F8 | **Barelvi (Ahl-e-Sunnat) research** — (a) Normal days: Imam Abu Hanifa's white twilight; Dawat-e-Islami's London timetable for 2026-10-12 back-solves to **Fajr 18.2°, Isha (Hanafi) 18.0°**, Isha (Shafi'i) 12.0°, Maghrib ≈1.4° below horizon (≈3 min after sunset), Asr Hanafi & Shafi'i both listed. (b) Persistent twilight: Darul Ifta Ahlesunnat (Dawat-e-Islami), fatwa FAM-1200, Mufti Muhammad Qasim Attari, 16 May 2026 — Isha is **not waived**; in principle it is qada (Bahar-e-Shariat), but out of necessity follow the **Sahibayn**: Isha after the red twilight (**≈12°**), prayed as ada; return to Imam Abu Hanifa's view when the hardship period ends; cites Fatawa Ridawiyya vol. 5 & 12, Bahar-e-Shariat, Al-Bahr al-Ra'iq, Fatawa Jamia Ashrafia vol. 5. Al-Jamiatul Ashrafia Mubarakpur (Fatawa Shareh Bukhari) — Leicester case: fatwa on the Sahibayn's red-twilight view for Isha; Fajr from actual subh sadiq, rejecting forcing astronomers' 18° (cites Ala Hazrat's risala *Darr al-Qubh*). Neither addresses polar day (no sunset) — no Barelvi-specific source found for D-F5 | Lead research (sources linked in chat; not a fatwa) |
 | D-F9 | Deobandi contrast (UK): estimation, e.g. Wifaqul Ulama timetables ≈1 h 15–20 min after Maghrib; nearest day / one-seventh / middle of night; Mufti Taqi Usmani (via Askimam) permits the Sahibayn's 15° in summer only | Lead research |
-| P-F1 | **Pending:** high-latitude default. Options: (1) **Barelvi profile** — Isha at the Sahibayn red twilight (12°) when 18° never occurs, Fajr 18° with fallback, optional Maghrib +3 min; (2) **Deobandi profile** — nearest day / nearest location / 15° summer; (3) nearest location for all. Add a nearest-day option either way | Lead recommendation, awaiting user |
+| D-F10 | **User decision: Barelvi (Ahl-e-Sunnat) profile is the default.** Normal days Fajr 18° / Isha 18° (Imam Abu Hanifa). When 18° never occurs: **Isha at the red twilight 12° (Sahibayn), counted ada**; if 12° never occurs either → nearest location. **Fajr → nearest location** (actual subh sadiq cannot be observed in flight; option `fajrFallback: 'redTwilight'`). Automatic return to 18° whenever it occurs. **Maghrib +3 min** ihtiyat (Dawat-e-Islami timetable). Polar day/night → nearest location. New rule `highLatitudeRule: 'redTwilight'`, settings `redTwilightAngle` (12), `fajrFallback`, `profile`; `PROFILES` = barelvi (default) / deobandi (nearest location) | User |
+| D-F11 | Lead judgement inside D-F10: Fajr fallback = nearest location rather than 12° — the sources found give no Barelvi ruling for Fajr at a fixed angle (Ashrafia: go by actual dawn); flagged to the user | Lead |
 
 ### 9.3 Algorithm & numerics
 | ID | Decision | Source |
@@ -240,7 +242,6 @@ lead; "Agent" = choice made inside a module by a sub-agent and accepted by the l
 | D-G4 | `types.ts` additions so far: optional `polarFallback` on PrayerSettings and `borrowedLatitude` on StaticPrayerTimes (non-breaking) | Lead |
 
 ### 9.9 Pending — needs the user
-* **P-F1** — high-latitude default: Barelvi profile vs Deobandi profile vs nearest location (see D-F6, D-F8, D-F9).
 * GitHub push access (D-G2).
 * API keys when deploying the Worker: `OPENROUTER_API_KEY` (required for AI parsing); optional `OPENSKY_CLIENT_ID`/`OPENSKY_CLIENT_SECRET` (free account; historical tracks), `FLIGHTAWARE_API_KEY`, `AERODATABOX_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
 * An actual itinerary photo for an end-to-end test.
