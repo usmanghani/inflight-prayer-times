@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeStaticTimes, makroohIntervals, solarDateAt, windowAt } from '../src/prayer/static';
+import { _searchCacheSize, computeStaticTimes, makroohIntervals, solarDateAt, windowAt } from '../src/prayer/static';
 import { DEFAULT_SETTINGS, METHODS, mergeSettings } from '../src/prayer/methods';
 import type { HighLatitudeRule, Madhab, MethodId, Observer, PrayerName, PrayerSettings, StaticPrayerTimes } from '../src/types';
 
@@ -193,9 +193,9 @@ describe('high latitudes', () => {
     expect(ruled.fajr.note).toBe('highLatitudeRule');
     expect(diffMin(ruled.sunrise.time as Date, ruled.fajr.time as Date)).toBeGreaterThan(30);
   });
-  it('Tromso 2026-06-21 is polarDay and falls back to the nearest latitude', () => {
+  it("Tromso 2026-06-21 is polarDay; the legacy 'fixedLatitude' fallback reproduces the 48.5 N times", () => {
     const o: Observer = { lat: 69.65, lon: 18.96, elevationM: 0 };
-    const t = computeStaticTimes(o, '2026-06-21', DEFAULT_SETTINGS);
+    const t = computeStaticTimes(o, '2026-06-21', mergeSettings({ polarFallback: 'fixedLatitude' }));
     expect(t.dayState).toBe('polarDay');
     for (const k of ['sunrise', 'asr', 'maghrib'] as const) {
       expect(t[k].time).not.toBeNull();
@@ -206,22 +206,24 @@ describe('high latitudes', () => {
     expect(t.isha.time).not.toBeNull();
     expect(t.midnight.time).not.toBeNull();
     expect(t.midnight.note).toBe('nearestLatitude');
+    expect(t.borrowedLatitude).toBe(48.5);
     // Same clock times as a 48.5 N observer at this longitude.
     const ref = computeStaticTimes({ lat: 48.5, lon: 18.96, elevationM: 0 }, '2026-06-21', DEFAULT_SETTINGS);
     expect(t.sunrise.time).toEqual(ref.sunrise.time);
     expect(t.maghrib.time).toEqual(ref.maghrib.time);
     expect(t.asr.time).toEqual(ref.asr.time);
   });
-  it('Tromso 2026-12-21 is polarNight and falls back to the nearest latitude', () => {
-    const o: Observer = { lat: 69.65, lon: 18.96, elevationM: 0 };
-    const t = computeStaticTimes(o, '2026-12-21', DEFAULT_SETTINGS);
+  it("Tromso 2026-12-21 is polarNight; 'fixedLatitude' and the southern mirror clamp to +/-48.5", () => {
+    const fixed = mergeSettings({ polarFallback: 'fixedLatitude' });
+    const t = computeStaticTimes({ lat: 69.65, lon: 18.96, elevationM: 0 }, '2026-12-21', fixed);
     expect(t.dayState).toBe('polarNight');
     for (const k of NAMES) expect(t[k].time, k).not.toBeNull();
     expect(t.sunrise.note).toBe('nearestLatitude');
-    // Southern hemisphere mirrors: clamp to -48.5.
-    const s = computeStaticTimes({ lat: -69.65, lon: 18.96, elevationM: 0 }, '2026-06-21', DEFAULT_SETTINGS);
+    expect(t.borrowedLatitude).toBe(48.5);
+    const s = computeStaticTimes({ lat: -69.65, lon: 18.96, elevationM: 0 }, '2026-06-21', fixed);
     expect(s.dayState).toBe('polarNight');
     expect(s.sunrise.note).toBe('nearestLatitude');
+    expect(s.borrowedLatitude).toBe(-48.5);
   });
   it("rule 'none' in polar regions leaves unreachable events null with noEvent", () => {
     const o: Observer = { lat: 69.65, lon: 18.96, elevationM: 0 };
@@ -338,7 +340,8 @@ describe('property: no NaN and chronological order across the globe', () => {
                 if (p.time === null && p.note !== 'noEvent') violations.push(`${where}: ${k} null with note ${p.note}`);
               }
               const ms = NAMES.map((k) => t[k].time?.getTime() ?? null);
-              if (t.dayState === 'normal' && rule !== 'none' && ms.every((x) => x !== null)) {
+              // Also holds in polar states: the fallback must give a consistent day.
+              if (rule !== 'none' && ms.every((x) => x !== null)) {
                 ordered++;
                 for (let i = 1; i < ms.length; i++) {
                   if (!((ms[i] as number) > (ms[i - 1] as number))) {
@@ -373,6 +376,173 @@ describe('property: no NaN and chronological order across the globe', () => {
       }
     }
     expect(violations.slice(0, 20)).toEqual([]);
+  });
+});
+
+describe('nearest-location fallback (aqrab al-bilad)', () => {
+  const REQUIRED = ['sunrise', 'asr', 'maghrib'] as const;
+  /** True if sunrise, Asr, Maghrib exist and the sun rises and sets (a "normal" day) at this exact latitude. */
+  const eventsExist = (lat: number, lon: number, date: string, s: PrayerSettings = DEFAULT_SETTINGS) => {
+    const t = computeStaticTimes({ lat, lon, elevationM: 0 }, date, mergeSettings({ ...s, highLatitudeRule: 'none' }));
+    return t.dayState === 'normal' && REQUIRED.every((k) => t[k].time !== null);
+  };
+
+  const cases: [string, number, number, string, 'polarDay' | 'polarNight'][] = [
+    ['Tromso June', 69.65, 18.96, '2026-06-21', 'polarDay'],
+    ['Tromso December', 69.65, 18.96, '2026-12-21', 'polarNight'],
+    ['80 N June', 80, 10, '2026-06-21', 'polarDay'],
+    ['80 N December', 80, 10, '2026-12-21', 'polarNight'],
+    ['89.9 N June', 89.9, -120, '2026-06-21', 'polarDay'],
+    ['89.9 N December', 89.9, -120, '2026-12-21', 'polarNight'],
+    ['75 S June', -75, 0, '2026-06-21', 'polarNight'],
+    ['75 S December', -75, 0, '2026-12-21', 'polarDay'],
+  ];
+
+  it.each(cases)('%s: borrowed latitude is the nearest place with sunrise, Asr and sunset', (_n, lat, lon, date, state) => {
+    for (const rule of ['angleBased', 'oneSeventh', 'middleOfNight', 'nearestLatitude'] as HighLatitudeRule[]) {
+      const s = mergeSettings({ highLatitudeRule: rule });
+      const t = computeStaticTimes({ lat, lon, elevationM: 0 }, date, s);
+      expect(t.dayState).toBe(state);
+      const b = t.borrowedLatitude as number;
+      expect(b, rule).toBeDefined();
+      // Between the observer and the equator, same hemisphere.
+      expect(Math.sign(b)).toBe(Math.sign(lat));
+      expect(Math.abs(b)).toBeLessThan(Math.abs(lat));
+      // All events exist there ...
+      expect(eventsExist(b, lon, date, s), `events exist at ${b}`).toBe(true);
+      // ... but not 0.3 degrees closer to the pole (nor at the observer): it is the nearest such place.
+      expect(eventsExist(b + Math.sign(lat) * 0.3, lon, date, s), `events must not exist at ${b + Math.sign(lat) * 0.3}`).toBe(false);
+      // And not needlessly far: within 0.3 degrees of the boundary (0.01 tolerance + 0.05 margin).
+      expect(eventsExist(b - Math.sign(lat) * 0.0, lon, date, s)).toBe(true);
+      // Complete, non-null and chronologically ordered day.
+      for (const k of NAMES) expect(t[k].time, `${rule} ${k}`).not.toBeNull();
+      const ms = NAMES.map((k) => (t[k].time as Date).getTime());
+      for (let i = 1; i < ms.length; i++) expect(ms[i], `${rule}: ${NAMES[i - 1]} < ${NAMES[i]}`).toBeGreaterThan(ms[i - 1]);
+      expect(t.midnight.time).not.toBeNull();
+      expect(t.midnight.note).toBe('nearestLatitude');
+      for (const k of REQUIRED) expect(t[k].note, k).toBe('nearestLatitude');
+      expect(t.dhuhr.note).toBe('ok');
+    }
+  });
+
+  it('borrowed values: Tromso June ~65.7 N (sunset needs lat < 90-23.44-0.83), December ~66.5 N (Asr needs a noon sun above the horizon)', () => {
+    const jun = computeStaticTimes({ lat: 69.65, lon: 18.96, elevationM: 0 }, '2026-06-21', DEFAULT_SETTINGS);
+    expect(jun.borrowedLatitude as number).toBeGreaterThan(65.4);
+    expect(jun.borrowedLatitude as number).toBeLessThan(65.8);
+    const dec = computeStaticTimes({ lat: 69.65, lon: 18.96, elevationM: 0 }, '2026-12-21', DEFAULT_SETTINGS);
+    expect(dec.borrowedLatitude as number).toBeGreaterThan(66.2);
+    expect(dec.borrowedLatitude as number).toBeLessThan(66.6);
+  });
+
+  it('borrowed times equal the real times of an observer at the borrowed latitude, Dhuhr stays at the real place', () => {
+    const o: Observer = { lat: 80, lon: 10, elevationM: 0 };
+    const t = computeStaticTimes(o, '2026-06-21', DEFAULT_SETTINGS);
+    const at = computeStaticTimes({ ...o, lat: t.borrowedLatitude as number }, '2026-06-21', DEFAULT_SETTINGS);
+    expect(at.dayState).toBe('normal');
+    for (const k of REQUIRED) expect(t[k].time).toEqual(at[k].time);
+    expect(t.dhuhr.time).toEqual(at.dhuhr.time); // transit is latitude independent
+  });
+
+  it('the search keeps the observer elevation: a dip of 3.64 deg moves the borrowed latitude toward the equator', () => {
+    const sea = computeStaticTimes({ lat: 80, lon: 10, elevationM: 0 }, '2026-06-21', DEFAULT_SETTINGS);
+    const high = computeStaticTimes({ lat: 80, lon: 10, elevationM: 11000 }, '2026-06-21', DEFAULT_SETTINGS);
+    // The sun must get 4.5 deg (0.83 + 3.64) below the horizon to set: lat < 90 - 23.44 - 4.47 ~ 62.1.
+    expect(high.borrowedLatitude as number).toBeLessThan((sea.borrowedLatitude as number) - 3);
+    expect(high.borrowedLatitude as number).toBeGreaterThan(61.5);
+    expect(high.borrowedLatitude as number).toBeLessThan(62.1);
+  });
+
+  it('maghrib-angle methods (Tehran) also need the Maghrib angle to be reached at the borrowed latitude', () => {
+    const s = mergeSettings({ method: METHODS.tehran, madhab: 'jafari' });
+    const t = computeStaticTimes({ lat: 78, lon: 51, elevationM: 0 }, '2026-06-21', s);
+    expect(t.maghrib.note).toBe('nearestLatitude'); // reached the angle, no sunset fallback
+    const b = t.borrowedLatitude as number;
+    const at = computeStaticTimes({ lat: b, lon: 51, elevationM: 0 }, '2026-06-21', mergeSettings({ ...s, highLatitudeRule: 'none' }));
+    expect(at.maghrib.note).toBe('ok');
+    expect(at.maghrib.time).toEqual(t.maghrib.time);
+    expect(b).toBeLessThan(62.1); // sun must reach -4.5 degrees: lat < 90 - 23.44 - 4.5 ~ 62.06
+  });
+
+  it("rule 'nearestLatitude': twilight comes from the nearest latitude where that angle is reached (per event)", () => {
+    const s = mergeSettings({ highLatitudeRule: 'nearestLatitude' });
+    const t = computeStaticTimes({ lat: 80, lon: 10, elevationM: 0 }, '2026-06-21', s);
+    expect(t.fajr.note).toBe('nearestLatitude');
+    expect(t.isha.note).toBe('nearestLatitude');
+    // The Fajr/Isha latitude is further south than the sunrise/sunset latitude (18 deg twilight needs lat < ~48.6).
+    const twilightLat = computeStaticTimes({ lat: 48.4, lon: 10, elevationM: 0 }, '2026-06-21', mergeSettings({ highLatitudeRule: 'none' }));
+    expect(twilightLat.fajr.time).not.toBeNull();
+    expect(Math.abs(diffMin(t.fajr.time as Date, twilightLat.fajr.time as Date))).toBeLessThan(15);
+    // A smaller Fajr angle is reached closer to the pole, so its time differs.
+    const s15 = mergeSettings({ highLatitudeRule: 'nearestLatitude', method: METHODS.isna });
+    const t15 = computeStaticTimes({ lat: 80, lon: 10, elevationM: 0 }, '2026-06-21', s15);
+    expect(t15.fajr.time).not.toBeNull();
+    expect(diffMin(t.fajr.time as Date, t15.fajr.time as Date)).not.toBe(0);
+  });
+
+  it("non-polar rule 'nearestLatitude' (Reykjavik) borrows Fajr/Isha dynamically and reports the latitude", () => {
+    const o: Observer = { lat: 64.13, lon: -21.94, elevationM: 0 };
+    const dyn = computeStaticTimes(o, '2026-06-21', mergeSettings({ highLatitudeRule: 'nearestLatitude' }));
+    expect(dyn.dayState).toBe('normal');
+    expect(dyn.fajr.note).toBe('nearestLatitude');
+    expect(dyn.isha.note).toBe('nearestLatitude');
+    const b = dyn.borrowedLatitude as number;
+    expect(b).toBeGreaterThan(46);
+    expect(b).toBeLessThan(49.5);
+    expect(computeStaticTimes({ ...o, lat: b }, '2026-06-21', mergeSettings({ highLatitudeRule: 'none' })).fajr.time).not.toBeNull();
+    expect(computeStaticTimes({ ...o, lat: b + 0.3 }, '2026-06-21', mergeSettings({ highLatitudeRule: 'none' })).fajr.time).toBeNull();
+    // Sunrise/sunset stay the real local ones.
+    const real = computeStaticTimes(o, '2026-06-21', DEFAULT_SETTINGS);
+    expect(dyn.sunrise.time).toEqual(real.sunrise.time);
+    expect(dyn.maghrib.time).toEqual(real.maghrib.time);
+    // 'fixedLatitude' keeps the legacy 48.5 behaviour exactly.
+    const fixed = computeStaticTimes(o, '2026-06-21', mergeSettings({ highLatitudeRule: 'nearestLatitude', polarFallback: 'fixedLatitude' }));
+    expect(fixed.borrowedLatitude).toBe(48.5);
+    const ref = computeStaticTimes({ ...o, lat: 48.5 }, '2026-06-21', mergeSettings({ highLatitudeRule: 'nearestLatitude' }));
+    expect(fixed.fajr.time).toEqual(ref.fajr.time);
+    expect(fixed.isha.time).toEqual(ref.isha.time);
+  });
+
+  it('no borrowing (and no borrowedLatitude) at ordinary latitudes, or with rule none', () => {
+    expect(computeStaticTimes(KARACHI, '2026-03-21', DEFAULT_SETTINGS).borrowedLatitude).toBeUndefined();
+    const none = computeStaticTimes({ lat: 80, lon: 0, elevationM: 0 }, '2026-06-21', mergeSettings({ highLatitudeRule: 'none' }));
+    expect(none.borrowedLatitude).toBeUndefined();
+  });
+
+  it('is independent of the exact observer latitude and is repeatable (memoised search)', () => {
+    const a = computeStaticTimes({ lat: 70, lon: 18.96, elevationM: 0 }, '2026-06-21', DEFAULT_SETTINGS);
+    const b = computeStaticTimes({ lat: 88.1, lon: 18.96, elevationM: 0 }, '2026-06-21', DEFAULT_SETTINGS);
+    const c = computeStaticTimes({ lat: 70, lon: 18.96, elevationM: 0 }, '2026-06-21', DEFAULT_SETTINGS);
+    expect(a.borrowedLatitude).toBe(b.borrowedLatitude);
+    expect(a.sunrise.time).toEqual(c.sunrise.time);
+  });
+
+  it('the search memo is bounded', () => {
+    for (let i = 0; i < 600; i++) computeStaticTimes({ lat: 85, lon: i * 0.5, elevationM: 0 }, '2026-06-21', DEFAULT_SETTINGS);
+    expect(_searchCacheSize()).toBeLessThanOrEqual(256);
+  });
+
+  it('is fast near the pole (well under 2 ms per call)', () => {
+    const N = 100;
+    computeStaticTimes({ lat: 89.9, lon: 0, elevationM: 11000 }, '2026-06-21', DEFAULT_SETTINGS); // warm JIT
+    const t0 = performance.now();
+    for (let i = 0; i < N; i++) computeStaticTimes({ lat: 89.9, lon: 100 + i * 0.37, elevationM: 11000 }, '2026-06-21', DEFAULT_SETTINGS);
+    expect((performance.now() - t0) / N).toBeLessThan(2);
+  });
+
+  it('never yields NaN / Invalid Date near the poles on a dense latitude grid, for both fallbacks', () => {
+    for (const polarFallback of ['nearestLocation', 'fixedLatitude'] as const) {
+      for (let lat = 60; lat <= 90; lat += 1.7) {
+        for (const date of ['2026-03-20', '2026-06-21', '2026-12-21']) {
+          for (const sgn of [1, -1]) {
+            const t = computeStaticTimes({ lat: sgn * lat, lon: 33, elevationM: 11000 }, date, mergeSettings({ polarFallback }));
+            for (const k of [...NAMES, 'midnight' as const]) {
+              if (t[k].time) expect(Number.isNaN(t[k].time!.getTime()), `${lat} ${date} ${k}`).toBe(false);
+            }
+            if (t.borrowedLatitude !== undefined) expect(Number.isFinite(t.borrowedLatitude)).toBe(true);
+          }
+        }
+      }
+    }
   });
 });
 

@@ -46,6 +46,8 @@ export interface PrayerSettings {
   /** Also apply altitude horizon dip to fajr/isha twilight angles (default false). */
   dipForTwilight: boolean;
   offsets: PrayerOffsets;
+  /** Fallback when the sun does not rise/set (polar day/night) or a required twilight never occurs under rule 'nearestLatitude'. 'nearestLocation' (default) = nearest latitude, same longitude, where the needed events exist on that date; 'fixedLatitude' = legacy ±48.5°. */
+  polarFallback?: 'nearestLocation' | 'fixedLatitude';
 }
 
 // ───────────────────────────── Prayer results ─────────────────────────────
@@ -80,6 +82,13 @@ export interface StaticPrayerTimes {
   midnight: PrayerTime;      // islamic midnight (end of preferred isha time)
   /** Solar noon altitude & whether sun rises/sets at all that day. */
   dayState: 'normal' | 'polarDay' | 'polarNight';
+  /**
+   * Latitude (signed, same longitude) whose times were borrowed by the nearest-location fallback,
+   * for display. Polar day/night: the latitude supplying sunrise/Asr/Maghrib/night length.
+   * Otherwise (rule 'nearestLatitude'): the borrowed twilight latitude, nearer to the equator if two.
+   * Absent when nothing was borrowed.
+   */
+  borrowedLatitude?: number;
 }
 
 export interface Observer {

@@ -64,6 +64,7 @@ export const DEFAULT_SETTINGS: PrayerSettings = {
   dipForSunriseSunset: true,
   dipForTwilight: false,
   offsets: { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 },
+  polarFallback: 'nearestLocation',
 };
 
 /** Asr shadow multiple: Hanafi = 2 (shadow = twice the object + noon shadow), all others = 1. */
@@ -143,6 +144,7 @@ const RULES: readonly HighLatitudeRule[] = [
   'nearestLatitude',
   'none',
 ];
+const POLAR_FALLBACKS: readonly NonNullable<PrayerSettings['polarFallback']>[] = ['nearestLocation', 'fixedLatitude'];
 const OFFSET_KEYS: readonly (keyof PrayerOffsets)[] = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
 function inRange(x: unknown, lo: number, hi: number): boolean {
@@ -157,6 +159,11 @@ export function validateSettings(s: PrayerSettings): string[] {
   if (!MADHABS.includes(s.madhab)) errors.push(`Unknown madhab "${String(s.madhab)}".`);
   if (!RULES.includes(s.highLatitudeRule)) {
     errors.push(`Unknown high-latitude rule "${String(s.highLatitudeRule)}".`);
+  }
+
+  // Optional: a missing value means 'nearestLocation'.
+  if (s.polarFallback !== undefined && !POLAR_FALLBACKS.includes(s.polarFallback)) {
+    errors.push(`Unknown polar fallback "${String(s.polarFallback)}".`);
   }
 
   const m = s.method;

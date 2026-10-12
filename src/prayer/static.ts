@@ -27,8 +27,14 @@ import type {
 const MS_PER_MIN = 60_000;
 const MS_PER_HOUR = 3_600_000;
 const MS_PER_DAY = 86_400_000;
-/** Latitude used by the "nearest latitude" (aqrab al-bilad) fallback. */
+/** Legacy fixed latitude of the "nearest latitude" fallback (`polarFallback: 'fixedLatitude'`), and the last resort. */
 const NEAREST_LAT = 48.5;
+/** Nearest-location search: grid step toward the equator, bisection tolerance, and safety margin (degrees). */
+const SEARCH_STEP = 0.25;
+const SEARCH_TOL = 0.01;
+const SEARCH_MARGIN = 0.05;
+/** Size of the memo of latitude searches (a flight asks for the same day/longitude thousands of times). */
+const SEARCH_CACHE_SIZE = 256;
 /** Refined iterations per crossing; declination/EoT drift is tiny so 4 is ample. */
 const ITERATIONS = 4;
 /** Below this |cos φ cos δ| the hour-angle division is meaningless (poles); use the sign instead. */
@@ -150,6 +156,8 @@ interface Core {
   nextSunriseMs: number | null;
   /** True if the values come from the nearest-latitude fallback at ±48.5°. */
   fallback: boolean;
+  /** Signed latitude whose times were borrowed (see StaticPrayerTimes.borrowedLatitude). */
+  borrowedLat?: number;
   dayState: StaticPrayerTimes['dayState'];
 }
 
@@ -168,6 +176,99 @@ function nightPortion(rule: HighLatitudeRule, angle: number): number | null {
     case 'middleOfNight': return 1 / 2;
     default: return null;
   }
+}
+
+// ─────────────────────── nearest-location search ───────────────────────
+
+/**
+ * Do all the given Sun altitudes get crossed at `lat`? With `withNight`, also sunset and *next* sunrise at alts[0].
+ * With a non-zero `asrFactor`, Asr (shadow factor 1 or 2) must exist too.
+ */
+function altitudesReached(
+  dayStartMs: number,
+  lat: number,
+  lon: number,
+  alts: number[],
+  withNight: boolean,
+  asrFactor: 1 | 2 | 0,
+): boolean {
+  // Cheapest/most restrictive first: a failed crossing returns after a single Sun evaluation.
+  for (const a of alts) {
+    if (crossing(dayStartMs, lat, lon, () => a, -1).kind !== 'time') return false;
+  }
+  if (withNight) {
+    if (crossing(dayStartMs, lat, lon, () => alts[0], +1).kind !== 'time') return false;
+    if (crossing(dayStartMs + MS_PER_DAY, lat, lon, () => alts[0], -1).kind !== 'time') return false;
+  }
+  // Asr needs the noon Sun to be above the horizon (otherwise a Dec. polar-night edge place has no Asr).
+  if (asrFactor !== 0 && crossing(dayStartMs, lat, lon, asrAltitude(lat, asrFactor), +1).kind !== 'time') return false;
+  return true;
+}
+
+/** Tiny LRU (Map keeps insertion order): key -> |latitude| found, or null when none exists. */
+const searchCache = new Map<string, number | null>();
+
+/**
+ * Nearest-location (aqrab al-bilad) search. Starting poleward of the observer (whose own latitude is known to
+ * fail), walk toward the equator on a fixed 0.25° grid until all `alts` are crossed (and, with `withNight`, the
+ * sun also sets and rises the next day); then bisect the bracket down to 0.01° and step a further 0.05° toward
+ * the equator so the borrowed place is safely inside the region where the events exist.
+ *
+ * The grid is global (multiples of 0.25°) and the longitude is quantised to 0.1°, so the result depends only on
+ * hemisphere, date, ~longitude and altitudes, not on the exact observer position: that makes it memoisable.
+ * Returns a signed latitude, or null if the equator is reached without success (cannot happen for real
+ * parameters: at the equator the Sun always rises/sets and goes at least 66° below the horizon).
+ */
+function findNearestLatitude(
+  lat: number,
+  lon: number,
+  dayStartMs: number,
+  alts: number[],
+  withNight: boolean,
+  asrFactor: 1 | 2 | 0 = 0,
+): number | null {
+  const sign = lat < 0 ? -1 : 1;
+  const lonKey = Math.round(lon * 10);
+  const key = `${sign}|${dayStartMs}|${lonKey}|${withNight ? 1 : 0}|${asrFactor}|${alts.map((a) => a.toFixed(3)).join(',')}`;
+  let mag = searchCache.get(key);
+  if (mag !== undefined) {
+    searchCache.delete(key); // refresh recency
+    searchCache.set(key, mag);
+  } else {
+    mag = searchMagnitude(Math.abs(lat), lonKey / 10, sign, dayStartMs, alts, withNight, asrFactor);
+    searchCache.set(key, mag);
+    if (searchCache.size > SEARCH_CACHE_SIZE) searchCache.delete(searchCache.keys().next().value as string);
+  }
+  return mag === null ? null : sign * mag;
+}
+
+function searchMagnitude(
+  startMag: number,
+  lon: number,
+  sign: 1 | -1,
+  dayStartMs: number,
+  alts: number[],
+  withNight: boolean,
+  asrFactor: 1 | 2 | 0,
+): number | null {
+  const ok = (mag: number) => altitudesReached(dayStartMs, sign * mag, lon, alts, withNight, asrFactor);
+  // Largest grid latitude strictly closer to the equator than the observer.
+  let k = Math.ceil(startMag / SEARCH_STEP) - 1;
+  while (k >= 0 && !ok(k * SEARCH_STEP)) k--;
+  if (k < 0) return null;
+  let lo = k * SEARCH_STEP; // events exist
+  let hi = lo + SEARCH_STEP; // events do not exist (the observer is at or beyond this, by monotonicity)
+  while (hi - lo > SEARCH_TOL) {
+    const mid = (lo + hi) / 2;
+    if (ok(mid)) lo = mid;
+    else hi = mid;
+  }
+  return Math.max(0, lo - SEARCH_MARGIN);
+}
+
+/** Current size of the memo (exposed for tests only). */
+export function _searchCacheSize(): number {
+  return searchCache.size;
 }
 
 /**
@@ -198,20 +299,31 @@ function computeCore(
       : rise.kind === 'never' || set.kind === 'never' ? 'polarNight'
         : 'normal';
 
-  // No sunrise/sunset (or no sunrise tomorrow ⇒ no night length): the polar fallback.
+  // No sunrise/sunset (or no sunrise tomorrow ⇒ no night length): borrow a nearer place's times.
   const nightKnown = rise.kind === 'time' && set.kind === 'time' && nextRise.kind === 'time';
-  if (!nightKnown && allowFallback && s.highLatitudeRule !== 'none' && Math.abs(lat) > NEAREST_LAT) {
-    const nearLat = lat > 0 ? NEAREST_LAT : -NEAREST_LAT;
-    const c = computeCore(nearLat, lon, elevationM, dayStartMs, s, false);
-    // Keep more specific notes ('interval', 'highLatitudeRule') that the fallback itself produced.
-    const tag = (p: PrayerTime): PrayerTime => (p.time && p.note === 'ok' ? { time: p.time, note: 'nearestLatitude' } : p);
-    // Dhuhr (solar transit) does not depend on latitude, so it stays an exact 'ok'.
-    return {
-      ...c,
-      fajr: tag(c.fajr), sunrise: tag(c.sunrise), asr: tag(c.asr), maghrib: tag(c.maghrib), isha: tag(c.isha),
-      fallback: true,
-      dayState,
-    };
+  if (!nightKnown && allowFallback && s.highLatitudeRule !== 'none') {
+    let nearLat: number | null = null;
+    if (s.polarFallback !== 'fixedLatitude') {
+      // Nearest location where the sun rises and sets (and reaches the Maghrib angle, if any) and Asr exists.
+      const alts = [horizonAlt];
+      if (m.maghribAngle !== null) alts.push(-m.maghribAngle - twilightDip);
+      nearLat = findNearestLatitude(lat, lon, dayStartMs, alts, true, asrShadowFactor(s.madhab));
+    }
+    // Legacy fixed latitude (also the last resort if the search ever finds nothing).
+    if (nearLat === null && Math.abs(lat) > NEAREST_LAT) nearLat = lat > 0 ? NEAREST_LAT : -NEAREST_LAT;
+    if (nearLat !== null) {
+      const c = computeCore(nearLat, lon, elevationM, dayStartMs, s, false);
+      // Keep more specific notes ('interval', 'highLatitudeRule') that the fallback itself produced.
+      const tag = (p: PrayerTime): PrayerTime => (p.time && p.note === 'ok' ? { time: p.time, note: 'nearestLatitude' } : p);
+      // Dhuhr (solar transit) does not depend on latitude, so it stays an exact 'ok'.
+      return {
+        ...c,
+        fajr: tag(c.fajr), sunrise: tag(c.sunrise), asr: tag(c.asr), maghrib: tag(c.maghrib), isha: tag(c.isha),
+        fallback: true,
+        borrowedLat: nearLat,
+        dayState,
+      };
+    }
   }
 
   const core = emptyCore();
@@ -285,21 +397,50 @@ function applyHighLatitudeRule(
   const needFajr = fajrMs === null;
   const needIsha = ishaMs === null && !ishaByInterval;
 
-  if (rule === 'nearestLatitude') {
-    // Only when something is missing: take those times from latitude ±48.5° (same longitude/date).
-    if ((needFajr || needIsha) && Math.abs(lat) > NEAREST_LAT) {
-      const near = computeCore(lat > 0 ? NEAREST_LAT : -NEAREST_LAT, lon, elevationM, dayStartMs, s, false);
-      // A borrowed time on the wrong side of the local sunrise/sunset is meaningless; guard it.
-      if (needFajr && near.fajr.time && (sunriseMs === null || near.fajr.time.getTime() < sunriseMs)) {
-        core.fajr = { time: near.fajr.time, note: 'nearestLatitude' };
+  if (rule === 'nearestLatitude' && (needFajr || needIsha)) {
+    // A borrowed time on the wrong side of the local sunrise/sunset is meaningless; guard it.
+    const fajrOk = (ms: number) => sunriseMs === null || ms < sunriseMs;
+    const ishaOk = (ms: number) => sunsetMs === null || ms > sunsetMs;
+    const note = (b: number) => {
+      if (core.borrowedLat === undefined || Math.abs(b) < Math.abs(core.borrowedLat)) core.borrowedLat = b;
+    };
+    if (s.polarFallback === 'fixedLatitude') {
+      // Legacy: take the missing times from latitude ±48.5° (same longitude/date).
+      if (Math.abs(lat) > NEAREST_LAT) {
+        const b = lat > 0 ? NEAREST_LAT : -NEAREST_LAT;
+        const near = computeCore(b, lon, elevationM, dayStartMs, s, false);
+        if (needFajr && near.fajr.time && fajrOk(near.fajr.time.getTime())) {
+          core.fajr = { time: near.fajr.time, note: 'nearestLatitude' };
+          note(b);
+        }
+        if (needIsha && near.isha.time && ishaOk(near.isha.time.getTime())) {
+          core.isha = { time: near.isha.time, note: 'nearestLatitude' };
+          note(b);
+        }
       }
-      if (needIsha && near.isha.time && (sunsetMs === null || near.isha.time.getTime() > sunsetMs)) {
-        core.isha = { time: near.isha.time, note: 'nearestLatitude' };
+    } else {
+      // Nearest location where *this* twilight angle is actually reached (searched per event).
+      const twilightDip = s.dipForTwilight ? horizonDipDeg(elevationM) : 0;
+      const borrow = (angle: number, side: -1 | 1): { ms: number; lat: number } | null => {
+        const alt = -angle - twilightDip;
+        let b = findNearestLatitude(lat, lon, dayStartMs, [alt], false);
+        if (b === null && Math.abs(lat) > NEAREST_LAT) b = lat > 0 ? NEAREST_LAT : -NEAREST_LAT; // last resort
+        if (b === null) return null;
+        const c = crossing(dayStartMs, b, lon, () => alt, side);
+        return c.kind === 'time' ? { ms: c.ms, lat: b } : null;
+      };
+      if (needFajr) {
+        const r = borrow(m.fajrAngle, -1);
+        if (r && fajrOk(r.ms)) { core.fajr = pt(r.ms, 'nearestLatitude'); note(r.lat); }
+      }
+      if (needIsha && m.ishaAngle !== null) {
+        const r = borrow(m.ishaAngle, +1);
+        if (r && ishaOk(r.ms)) { core.isha = pt(r.ms, 'nearestLatitude'); note(r.lat); }
       }
     }
   }
 
-  // Night-portion rules (also the last resort for 'nearestLatitude' when 48.5° has no twilight either).
+  // Night-portion rules (also the last resort for 'nearestLatitude' when the borrowed time is unusable).
   const fajrNow = asMs(core.fajr);
   const ishaNow = asMs(core.isha);
   if (sunriseMs !== null) {
@@ -379,7 +520,13 @@ export function computeStaticTimes(obs: Observer, solarDate: string, settings: P
     midnight = pt(today.sunsetMs + (endMs - today.sunsetMs) / 2, note);
   }
 
-  return { solarDate, ...applyOffsets(today, settings), midnight, dayState: today.dayState };
+  return {
+    solarDate,
+    ...applyOffsets(today, settings),
+    midnight,
+    dayState: today.dayState,
+    ...(today.borrowedLat !== undefined ? { borrowedLatitude: today.borrowedLat } : {}),
+  };
 }
 
 /**

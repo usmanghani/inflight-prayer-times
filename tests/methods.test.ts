@@ -43,6 +43,7 @@ describe('defaults', () => {
     expect(DEFAULT_SETTINGS.highLatitudeRule).toBe('angleBased');
     expect(DEFAULT_SETTINGS.dipForSunriseSunset).toBe(true);
     expect(DEFAULT_SETTINGS.dipForTwilight).toBe(false);
+    expect(DEFAULT_SETTINGS.polarFallback).toBe('nearestLocation');
     expect(Object.values(DEFAULT_SETTINGS.offsets).every((v) => v === 0)).toBe(true);
     expect(validateSettings(DEFAULT_SETTINGS)).toEqual([]);
   });
@@ -104,6 +105,14 @@ describe('validateSettings', () => {
     expect(validateSettings({ ...DEFAULT_SETTINGS, offsets: { ...DEFAULT_SETTINGS.offsets, asr: 121 } }).length).toBe(1);
     expect(validateSettings({ ...DEFAULT_SETTINGS, offsets: { ...DEFAULT_SETTINGS.offsets, isha: NaN } }).length).toBe(1);
   });
+  it('validates polarFallback; a missing value is fine', () => {
+    expect(validateSettings({ ...DEFAULT_SETTINGS, polarFallback: 'fixedLatitude' })).toEqual([]);
+    expect(validateSettings({ ...DEFAULT_SETTINGS, polarFallback: 'nearestLocation' })).toEqual([]);
+    expect(validateSettings({ ...DEFAULT_SETTINGS, polarFallback: undefined })).toEqual([]);
+    const { polarFallback: _omit, ...legacy } = DEFAULT_SETTINGS;
+    expect(validateSettings(legacy)).toEqual([]);
+    expect(validateSettings({ ...DEFAULT_SETTINGS, polarFallback: 'bogus' as never }).length).toBe(1);
+  });
   it('reports every problem, in plain language', () => {
     const errs = validateSettings({
       ...DEFAULT_SETTINGS,
@@ -136,6 +145,11 @@ describe('mergeSettings', () => {
     const m = mergeSettings({ method: METHODS.ummAlQura });
     expect(m.method).toEqual(METHODS.ummAlQura);
     expect(m.method.ishaAngle).toBeNull();
+  });
+  it("polarFallback defaults to 'nearestLocation' and can be overridden", () => {
+    expect(mergeSettings({}).polarFallback).toBe('nearestLocation');
+    expect(mergeSettings({ polarFallback: 'fixedLatitude' }).polarFallback).toBe('fixedLatitude');
+    expect(mergeSettings({ polarFallback: undefined }).polarFallback).toBe('nearestLocation');
   });
   it('ignores undefined values', () => {
     const m = mergeSettings({ madhab: undefined, dipForTwilight: true });

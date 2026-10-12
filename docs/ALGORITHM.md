@@ -113,14 +113,44 @@ Isha, and in the extreme Sunrise and Maghrib, cannot be found from the Sun's ang
 | Angle-based | portion of the night = angle/60: Isha = sunset + (Isha° / 60) · night; Fajr = sunrise − (Fajr° / 60) · night |
 | One seventh | Isha at sunset + night/7; Fajr at sunrise − night/7 |
 | Middle of the night | Isha at sunset + night/2; Fajr = sunrise − night/2 |
-| Nearest latitude | use the times of latitude ±48.5° at the same longitude and date (*aqrab al-bilad*) |
+| Nearest latitude | take the missing Fajr/Isha from the nearest place (same longitude and date) where that twilight angle is actually reached (*aqrab al-bilad*, see below) |
 | None | the time is left empty (`null`, `noEvent`) |
 
 "night" is sunset to the next sunrise. Portion rules also *shorten* a twilight time that lies further from sunset or
-sunrise than the portion allows. When no sunrise or sunset exists at the place (polar day or night) the
-nearest-latitude fallback supplies all times. Every time that comes from a rule is marked with the note
+sunrise than the portion allows. Every time that comes from a rule is marked with the note
 `highLatitudeRule` or `nearestLatitude`; the engine turns each such event into a `highLatitudeRuleUsed` anomaly so
 that you can see where the rule, not the Sun, decided the time.
+
+### Polar day and polar night: nearest location (*aqrab al-bilad*)
+
+When the Sun does not rise or set at all (polar day or night; any rule except *None*), the schedule is borrowed from
+the **nearest place where the needed events exist**, computed dynamically for that date, longitude and elevation
+(setting `polarFallback`, default `nearestLocation`):
+
+1. Start at the observer's latitude and step toward the equator in 0.25° steps (same longitude, same observer
+   elevation, so the horizon dip stays consistent) until the Sun rises and sets on that date, rises again the next
+   day (night length, Islamic midnight), Asr exists (the noon Sun is above the horizon) and, for methods with a Maghrib
+   angle (Tehran, Ja'fari), that angle is reached.
+2. Bisect between the last failing and the first passing latitude down to 0.01°, then move another 0.05° toward the
+   equator so the borrowed place is safely inside the region where the events exist.
+3. Take Sunrise, Asr, Maghrib and the night length from that latitude. **Dhuhr stays at the real place**: solar transit
+   does not depend on latitude. The borrowed latitude is reported as `borrowedLatitude` for display.
+4. Fajr and Isha: if the twilight angle is reached at the borrowed latitude it is used; otherwise the configured
+   high-latitude rule is applied there. With the *Nearest latitude* rule the search simply continues toward the equator
+   for the latitude where that specific twilight angle is reached (searched separately for Fajr and Isha).
+
+Examples (21 June, no elevation): Tromsø (69.65° N) borrows ≈ 65.7° N, because the Sun only sets south of
+90° − 23.44° − 0.83°; 80° N and 89.9° N borrow the same latitude. On 21 December Tromsø borrows ≈ 66.5° N (the limit is
+set by Asr: the noon Sun must be above the horizon). With *Nearest latitude* and an 18° twilight angle, Fajr and Isha
+come from about 48.5° N. At 11 000 m the dip of 3.64° moves the sunset limit to about 62° N.
+
+The same dynamic search is used when the rule is *Nearest latitude* at a place where the Sun does set but 18° twilight
+never occurs (e.g. Reykjavik in June): only the missing twilight times are borrowed, and a borrowed time that would
+fall on the wrong side of the local sunrise/sunset is replaced by the angle-based portion. Searches are memoised per
+date, longitude (0.1°) and altitude set, so they cost well under a millisecond.
+
+`polarFallback: 'fixedLatitude'` restores the legacy behaviour (always latitude ±48.5°). If the search ever found
+nothing (it cannot for real parameters: the equator always has sunrise and sunset) the engine falls back to ±48.5°.
 
 ## 6. Anomalies
 
