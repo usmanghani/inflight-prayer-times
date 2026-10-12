@@ -107,11 +107,11 @@ tests/                     vitest unit + route-matrix regression
 | 2 | Astronomy & prayer engine: `astro/`, `prayer/methods.ts`, `prayer/static.ts`, `geo/qibla.ts` | Agent A | ✅ done, 101 tests |
 | 3 | Flight & journey: `geo/geodesy.ts`, `flight/*`, `time/tz.ts` | Agent B | ✅ done, 118 tests |
 | 4 | Data & OCR: 5,403 airports, 223-flight library (both directions), 14 sample itineraries, Tesseract OCR + itinerary parser | Agent C | ✅ done, 55 tests |
-| 5 | In-flight engine `prayer/inflight.ts`, `prayer/summary.ts`, route-matrix regression, `docs/ALGORITHM.md` | Agent D | 🔄 in progress |
+| 5 | In-flight engine `prayer/inflight.ts`, `prayer/summary.ts`, route-matrix regression, `docs/ALGORITHM.md` | Agent D | ✅ done |
 | 6 | Edge proxy `worker/` (Cloudflare + Vercel adapter), `src/api/` client, `docs/BACKEND.md`; OpenRouter DeepSeek default | Agent F | ✅ done, 58 worker + 13 client tests |
 | 7 | Regression fixture tooling `scripts/fixtures/` + real-track fixtures + library verification vs adsbdb | Agent G | 🔄 in progress |
-| 8 | UI: form, settings, Leaflet map, timeline, sun chart, table, CSV/ICS, PWA, dark mode, share links, Web Worker | Agent E | 🔄 in progress |
-| 9 | Integration review, README, push to GitHub, enable Pages | lead | ⏳ blocked on GitHub push access |
+| 8 | UI: form, settings, Leaflet map, timeline, sun chart, table, CSV/ICS, PWA, dark mode, share links, Web Worker | Agent E | ✅ done (+ Barelvi/Deobandi profiles) |
+| 9 | Integration review, README, push to GitHub, enable Pages | lead | 🔄 pushed; README + Pages pending |
 
 ## 7. Extras beyond the brief
 
@@ -237,17 +237,16 @@ lead; "Agent" = choice made inside a module by a sub-agent and accepted by the l
 | ID | Decision | Source |
 |---|---|---|
 | D-G1 | Repo `usmanghani/inflight-prayer-times` (personal account, not heraclescorp); built in a separate local repo, not the connected `docs` repo | User |
-| D-G2 | Session couldn't create repos (403); user created it. Push refused (`push_denied`): the GitHub account connected to Claude lacks write access → connect the `usmanghani` account at claude.ai/connect-github (or add the connected account as a Write collaborator) and install the Claude GitHub App on the repo | — |
+| D-G2 | Session couldn't create repos (403); user created it. Push was first refused (`push_denied`); after the user fixed access (connected account `usman-heracles` has write access) the repo was attached and `main` pushed. CI green on GitHub; Pages deploy needs Settings → Pages → Source = GitHub Actions | — |
 | D-G3 | Built by parallel Sonnet sub-agents with disjoint file ownership and a shared `types.ts` contract; lead reviews, verifies and commits | User |
 | D-G4 | `types.ts` additions so far: optional `polarFallback` on PrayerSettings and `borrowedLatitude` on StaticPrayerTimes (non-breaking) | Lead |
 
 ### 9.9 Pending — needs the user
-* GitHub push access (D-G2).
+* Enable GitHub Pages: Settings → Pages → Source = **GitHub Actions** (D-G2).
 * API keys when deploying the Worker: `OPENROUTER_API_KEY` (required for AI parsing); optional `OPENSKY_CLIENT_ID`/`OPENSKY_CLIENT_SECRET` (free account; historical tracks), `FLIGHTAWARE_API_KEY`, `AERODATABOX_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
 * An actual itinerary photo for an end-to-end test.
 
 ### 9.10 Open engineering items (lead)
-* Case-specific anomaly messages (D-A7).
 * Continuous cruise-altitude cap for short flights (D-R2).
 * Apply library fixes from adsbdb verification (D-D3).
 * Verify live upstream response shapes (AeroDataBox, AeroAPI, OpenSky, adsb.lol, OpenRouter PDF plugin) once keys exist — current worker fixtures are written from documentation.
