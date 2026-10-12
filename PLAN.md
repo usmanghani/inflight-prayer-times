@@ -122,3 +122,33 @@ tests/                     vitest unit + route-matrix regression
 * Times shown in UTC, origin tz, destination tz, and the tz under the aircraft.
 * Export to CSV (per-minute) and ICS (calendar events).
 * Works offline (PWA) once loaded.
+
+## 8. Online data, secrets & AI itinerary reading (added)
+
+The browser app stays fully functional offline/static. Anything that needs a
+secret goes through a **tiny stateless edge proxy** (`worker/`, Cloudflare
+Worker; a Vercel adapter is included) that holds API keys as encrypted secrets
+and never stores user data.
+
+| Endpoint | Purpose | Upstreams (first configured wins) |
+|---|---|---|
+| `GET /api/health` | which providers are configured | — |
+| `GET /api/flight?number=EK226&date=2026-10-12` | schedule / actual times / airports | AeroDataBox (key) → FlightAware AeroAPI (key) → adsbdb.com (free, route only) |
+| `GET /api/track?number=EK226&date=…` | real flown track (lat, lon, alt, time) | FlightAware AeroAPI (key) → OpenSky (OAuth client) → adsb.lol (free, current day) |
+| `POST /api/itinerary/extract` | itinerary photo/PDF/text → structured legs | **OpenRouter `deepseek/deepseek-v4.1-flash`** (default, cheap, vision + JSON schema); Claude / OpenAI optional |
+| `POST /api/route/parse` | free-text route / flight-plan string → legs + waypoints | same cheap model |
+
+Hardening: CORS origin allow-list, request size limits (images downscaled
+client-side to ≤ 1568 px), per-IP rate limiting, response caching for flight
+lookups, no logging of images, model output validated against a schema and then
+re-validated in the browser (IATA codes must exist, times parse).
+On-device Tesseract OCR remains the default/fallback when no backend is set.
+
+### Regression data tooling
+
+`scripts/fixtures/` — CLI tools that pull **real flights** from the same online
+sources (adsbdb route verification, adsb.lol traces, OpenSky / AeroAPI tracks
+when credentials are in env) for every flight in the library, both directions,
+and save normalised JSON fixtures in `tests/fixtures/tracks/` with source
+attribution. The regression suite replays those real tracks through the
+in-flight engine and compares against the great-circle model.
