@@ -167,8 +167,10 @@ in-flight engine and compares against the great-circle model.
 | 10 | Reference-value correction: the lead's brief gave Karachi 2026-03-21 values ≈4 min late (Fajr 05:23, Sunrise 06:38, Dhuhr 12:43, Asr 16:59/16:10, Maghrib 18:48, Isha 20:03). Agent A and an independent lead check (transit 12:39 PKT, EoT −7.2 min) agree on **05:19 / 06:35 / 12:39 / 17:01 (Hanafi) · 16:06 (Shafi'i) / 18:43 / 19:59**; tests use the verified values | Accuracy |
 | 11 | Also corrected in Agent B's tests: KHI→SFO great-circle 12,991 km (brief said ~13,2xx), KHI→DXB initial bearing 274.4° (brief said 260–270°) | Accuracy |
 
+| 12 | **No vulnerable dependencies, including dev tooling.** Vitest 3 → 5.0.3 in root and `worker/` (removes tinypool GHSA-5gmw-xhrv-c9v3 / GHSA-85c8-ppgw-ccpr); `npm audit` = 0 in both; CI runs `npm audit --audit-level=low` and fails on any finding | User request |
+| 13 | Engine verdict on "repeated window" anomalies: real consequences of the definitions (high-latitude rules on summer routes; near-polar great circles where solar time runs backwards). Open question for the user: polar day/night fallback — nearest latitude 48.5° (current) vs departure city vs Makkah | Fiqh choice belongs to the user |
+
 ### Waiting on the user
 * GitHub push access (item 5).
 * API keys when deploying the Worker: `OPENROUTER_API_KEY` (required for AI parsing); optional `OPENSKY_CLIENT_ID`/`SECRET` (free account, historical tracks), `FLIGHTAWARE_API_KEY`, `AERODATABOX_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
 * An actual itinerary photo to test the end-to-end flow (none attached yet).
-* Follow-up (lead): upgrade Vitest to v5 in root and `worker/` once agents finish — `npm audit` flags tinypool (dev-only test runner, not shipped; production deps have 0 vulnerabilities).
